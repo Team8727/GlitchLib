@@ -1,4 +1,4 @@
-package Glitch.Vision;
+package Glitch.Lib.Vision;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose2d;

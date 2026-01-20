@@ -1,4 +1,4 @@
-package Glitch.Motors;
+package Glitch.Lib.Motors;
 
 public interface Motor {
   /**

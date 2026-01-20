@@ -1,4 +1,4 @@
-package Glitch.Motors;
+package Glitch.Lib.Motors;
 
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
@@ -7,7 +7,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 import java.util.Set;
 
-import static Glitch.Motors.SparkConfigurator.getSparkMax;
+import static Glitch.Lib.Motors.SparkConfigurator.getSparkMax;
 
 public class SparkMaxMotor implements Motor{
   private final SparkMax motor;

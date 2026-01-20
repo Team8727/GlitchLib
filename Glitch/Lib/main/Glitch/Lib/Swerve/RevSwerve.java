@@ -1,6 +1,6 @@
-package Glitch.Swerve;
+package Glitch.Lib.Swerve;
 
-import Glitch.NetworkTableLogger;
+import Glitch.Lib.NetworkTableLogger;
 import com.studica.frc.AHRS;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -10,8 +10,8 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
 
-import static Glitch.Swerve.MAXSwerve.kinematics;
-import static Glitch.Swerve.MAXSwerve.maxWheelSpeed;
+import static Glitch.Lib.Swerve.MAXSwerve.kinematics;
+import static Glitch.Lib.Swerve.MAXSwerve.maxWheelSpeed;
 
 public abstract class RevSwerve extends SubsystemBase {
   // Swerve uses ccw+ angular quantities and a coordinate plane with 0,0 at the robot's center
