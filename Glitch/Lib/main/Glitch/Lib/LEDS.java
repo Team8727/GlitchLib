@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package Glitch.Lib.LEDs;
+package Glitch.Lib;
 
 import java.util.List;
 
@@ -55,6 +55,10 @@ public abstract class LEDS extends SubsystemBase {
       setPattern(pattern, infiniteDurationSeconds);
     }
 
+    /**
+     * Sets the pattern that the section will return once a timed pattern has completed.
+     * @param pattern
+     */
     public void setBase(LEDPattern pattern) {
       if (pattern == null) {
         pattern = LEDPattern.kOff;
@@ -66,7 +70,6 @@ public abstract class LEDS extends SubsystemBase {
     /**
      * Updates the section's pattern if it has a finite duration.
      * Applies the current pattern to the buffer view.
-     * Please put this in periodic.
      * 
      * @param deltaTimeSeconds The time since the last update in seconds.
      * @param animPattern The pattern that the animation will overlay.
@@ -84,27 +87,44 @@ public abstract class LEDS extends SubsystemBase {
       pattern.applyTo(this.bufferView);
     }
 
+    /**
+     * Returns the buffer view for this section.
+     * @return
+     */
     public AddressableLEDBufferView getBufferView() {
       return this.bufferView;
     }
 
+    /**
+     * Returns the length of this section.
+     * @return
+     */
     public int getLength() {
       return this.bufferView.getLength();
     }
   }
   
-  /** Creates a new LEDSubsystem. */
+  /** Creates a new LEDSubsystem.
+   * 
+   * @param port The PWM port the LED strip is connected to.
+   * @param length The total number of LEDs in the strip.
+   * @param sectionLengths The lengths of each section in the strip. Positive values indicate normal order, negative values indicate reversed order.
+   * The sections will be created in the order they are provided.
+   */
   protected LEDS(int port, int length, int... sectionLengths) {
     // LED setup and port configuration
-    lightStrip = new AddressableLED(port); // Correct PWM port
-    stripBuffer = new AddressableLEDBuffer(length); // Correct LED count
+    lightStrip = new AddressableLED(port);
+    stripBuffer = new AddressableLEDBuffer(length);
     sectionList = new java.util.ArrayList<Section>();
 
     int index = 0;
   
     for (int sectionLength: sectionLengths) {
       if (sectionLength == 0) {
-        throw new IllegalArgumentException("Section lengths must be positive integers.");
+        throw new IllegalArgumentException("You can't have a section length of 0.");
+      }
+      if ((index += sectionLength) > length || (index -= sectionLength) > length) {
+        throw new IllegalArgumentException("Section lengths exceed total strip length.");
       }
       if (sectionLength < 0) {
         sectionList.add(new Section(index - sectionLength - 1, index));
@@ -121,10 +141,17 @@ public abstract class LEDS extends SubsystemBase {
     lightStrip.start();
   }
 
+  /**
+   * Gets the list of sections in the LED strip.
+   */
   public List<Section> getSections() {
     return sectionList;
   }
 
+  
+  /**
+   * Updates all LED sections and applies the data buffer to the LED strip.
+   */
   @Override
   public void periodic() {
     final double deltaTimeSeconds = 0.02; // TODO: Is there a way to ensure this is accurate even with overruns?
