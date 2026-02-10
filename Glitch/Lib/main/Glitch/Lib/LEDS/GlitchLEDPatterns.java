@@ -2,8 +2,9 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package Glitch.Lib;
+package Glitch.Lib.LEDS;
 
+import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.LEDPattern.GradientType;
@@ -139,7 +140,7 @@ public class GlitchLEDPatterns {
       .blink(Second.of(0.5));
 
   /**
-   * Fire pattern (2025)
+   * Classic orange-red fire pattern (2025)
    * 
    * Never actually used on the robot but it's cool so I'll leave it in.
    */
@@ -250,13 +251,17 @@ public class GlitchLEDPatterns {
   }
 
   /** 
-  * This pattern creates a fun random noise overlay that took way too long to make. (2025)
+  * This method creates a fun random noise overlay pattern that took way too long to make. (2025)
   *
   * @param pattern The pattern that the random noise overlays.
   * @param updateTime The time in seconds between updates of the random noise overlay.
+  * @return The random noise pattern.
   */
   public static LEDPattern randomNoise(LEDPattern pattern, double updateTime) {
     return (reader, writer) -> {
+
+      AddressableLEDBuffer tempBuffer = new AddressableLEDBuffer(reader.getLength());
+      pattern.applyTo(tempBuffer);
 
       int ledsOn = 0;
       long actualUpdateTime = (long) Seconds.of(updateTime).in(Microseconds);
@@ -264,30 +269,67 @@ public class GlitchLEDPatterns {
 
       if (RobotController.getTime() % actualUpdateTime < updateLimit 
           && RobotController.getTime() % actualUpdateTime > 0) {
-            pattern.applyTo(reader, writer);
             for (int i = 0; i < reader.getLength(); i ++) {
               if(!(reader.getRed(i) == 0 && reader.getGreen(i) == 0 && reader.getBlue(i) == 0)) {
                 ledsOn += 1;
               }
-            } // TODO: Make sure that this works the way you want it and change the default pattern back to normal once you're done
-            for (int i = 0; i < reader.getLength(); i ++) {
-              double cycleRandom = Math.sin(Math.random());
-              if ((ledsOn < reader.getLength()/2) || cycleRandom >= 0.4) {
-                writer.setRGB(i, reader.getRed(i), reader.getGreen(i), reader.getBlue(i));
-                ledsOn += 1;
-              }
-              if (reader.getLength() - ledsOn < reader.getLength()/8 || cycleRandom < 0.4) {
-                writer.setRGB(i, 0, 0, 0);
-                ledsOn -= 1;
-              }
             }
+            
+            if (ledsOn != 0) {
+
+              double thisRandom = Math.random();
+
+              reader.forEach((i, r, g, b) -> {
+                if (i != 0 && i != reader.getLength() - 1 && i != reader.getLength()) {
+                  Color left = reader.getLED(i-1);
+                  Color mid = reader.getLED(i);
+                  Color right = reader.getLED(i+1);
+
+                  Color avg = new Color(
+                    (reader.getRed(i-1) + reader.getRed(i) + reader.getRed(i+1)) / 3,
+                    (reader.getGreen(i-1) + reader.getGreen(i) + reader.getGreen(i+1)) / 3,
+                    (reader.getBlue(i-1) + reader.getBlue(i) + reader.getBlue(i+1)) / 3
+                  );
+
+                  int population = 0;
+
+                  if (!left.equals(Color.kBlack)) {
+                    population += 1;
+                  }
+                  if (!mid.equals(Color.kBlack)) {
+                    population += 2;
+                  }
+                  if (!right.equals(Color.kBlack)) {
+                    population += 4;
+                  }
+
+                  if (population == 3 || population == 1 || population == 6 || population == 4) {
+                    writer.setRGB(i, tempBuffer.getRed(i), tempBuffer.getGreen(i), tempBuffer.getBlue(i));
+                  } else if (population == 0 || population == 7 || population == 5 || population == 2) {
+                    writer.setRGB(i, 0, 0, 0);
+                  } else {
+                    writer.setRGB(i, (int) avg.red*256, (int) avg.green*256, (int) avg.blue*256);
+                  }
+                }
+              });
+
+              writer.setRGB((int)(thisRandom * reader.getLength()), 
+                tempBuffer.getRed((int)(thisRandom * reader.getLength())), 
+                tempBuffer.getGreen((int)(thisRandom * reader.getLength())), 
+                tempBuffer.getBlue((int)(thisRandom * reader.getLength())));
+                
+            } else {
+              pattern.applyTo(reader, writer);
+            } 
+            // TODO: Make sure that this works the way you want it and change the default pattern back to normal once you're done
           }
     };
   }
 
   /**
-   * This pattern creates a fun random noise overlay that took way too long to make. (2025)
+   * This method creates a fun random noise overlay pattern that took way too long to make. (2025)
    * @param pattern The pattern that the random noise overlays.
+   * @return The random noise pattern.
    */
   public static LEDPattern randomNoise(LEDPattern pattern) {
     return randomNoise(pattern, 0.05);

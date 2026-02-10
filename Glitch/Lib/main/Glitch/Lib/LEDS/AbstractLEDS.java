@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package Glitch.Lib;
+package Glitch.Lib.LEDS;
 
 import java.util.List;
 
@@ -10,10 +10,11 @@ import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.AddressableLEDBufferView;
 import edu.wpi.first.wpilibj.LEDPattern;
+import edu.wpi.first.wpilibj.AddressableLED.ColorOrder;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public abstract class LEDS extends SubsystemBase {
-  private final AddressableLED lightStrip;
+public abstract class AbstractLEDS extends SubsystemBase {
+  private AddressableLED lightStrip;
   public final AddressableLEDBuffer stripBuffer;
   private final List<Section> sectionList;
 
@@ -111,9 +112,8 @@ public abstract class LEDS extends SubsystemBase {
    * @param sectionLengths The lengths of each section in the strip. Positive values indicate normal order, negative values indicate reversed order.
    * The sections will be created in the order they are provided.
    */
-  protected LEDS(int port, int length, int... sectionLengths) {
+  protected AbstractLEDS(int length, int... sectionLengths) {
     // LED setup and port configuration
-    lightStrip = new AddressableLED(port);
     stripBuffer = new AddressableLEDBuffer(length);
     sectionList = new java.util.ArrayList<Section>();
 
@@ -134,11 +134,29 @@ public abstract class LEDS extends SubsystemBase {
         index += sectionLength;
       }
     }
+  }
 
+  /**
+   * Initializes the LED strip on the specified PWM port. Must be called in order for the LEDs to function on the robot.
+   * @param port
+   */
+  public void initializeLEDS(int port) {
+    lightStrip = new AddressableLED(port);
+    lightStrip.setColorOrder(ColorOrder.kRGB);
     lightStrip.setLength(stripBuffer.getLength());
-
     lightStrip.setData(stripBuffer);
     lightStrip.start();
+  }
+
+  public void disableLEDS() {
+    if (lightStrip != null) {
+      lightStrip.close();
+      lightStrip = null;
+    }
+  }
+
+  public boolean isStripReal() {
+    return lightStrip != null;
   }
 
   /**
@@ -159,6 +177,9 @@ public abstract class LEDS extends SubsystemBase {
     for (Section section : sectionList) {
       section.update(deltaTimeSeconds);
     }
-    lightStrip.setData(stripBuffer);
+
+    if (lightStrip != null) {
+      lightStrip.setData(stripBuffer);
+    }
   }
 }
