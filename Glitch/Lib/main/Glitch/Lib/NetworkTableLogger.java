@@ -30,7 +30,7 @@ public class NetworkTableLogger {
 
   /**
    * Custom NetworkTable logger created by Glitch 2.0 in 2025. This logger is used to log values to
-   * the network table (can be seen using AdvantageScope, Glass, Elastic, etc.)
+   * the network table (can be seen using AdvantageScope, Glass, Elastic, etc.). ALL log___() methods for different types of values must be placed in a periodically updating part of code for the subsystem (like periodic()) in order to update properly. 
    *
    * @param subsystemFor the subsystem this logger will log values for
    */
