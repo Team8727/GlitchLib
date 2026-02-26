@@ -151,6 +151,19 @@ public class GlitchLEDPatterns {
     Color.kOrange,
     Color.kRed);
 
+    /**
+     * Looks really neat when paired with the 2026 fire pattern (2026)
+     */
+  public static final LEDPattern funGradient = LEDPattern.gradient(
+    GradientType.kContinuous, 
+    Color.kRed, 
+    Color.kOrange, 
+    Color.kYellow, 
+    Color.kGreen, 
+    Color.kBlue, 
+    Color.kPurple)
+      .scrollAtRelativeSpeed(Percent.per(Second).of(10));
+
   /*
    * Deeply experimental and untested Enzo patterns (2025)
    * 
@@ -219,23 +232,25 @@ public class GlitchLEDPatterns {
    * @param pattern The pattern that the fire overlay applies to.
    * @param updateTime The time in seconds between updates of the fire overlay.
    */
-  public static LEDPattern fire(LEDPattern pattern, double updateTime) {
+  public static LEDPattern oldFire(LEDPattern pattern, double updateTime) {
     return (reader, writer) -> {
 
-      double randomOffset = Math.random() * 1.33;
+      AddressableLEDBuffer tempBuffer = new AddressableLEDBuffer(reader.getLength());
+      pattern.applyTo(tempBuffer);
+
+      double randomOffset = (Math.random() * Math.PI * 2) + 5;
       long actualUpdateTime = (long) Seconds.of(updateTime).in(Microseconds);
       long updateLimit = (long) Seconds.of(0.039).in(Microseconds);
+      long robotTime = RobotController.getTime();
 
-      if (RobotController.getTime() % actualUpdateTime < updateLimit 
-          && RobotController.getTime() % actualUpdateTime > 0) {
-
-        pattern.applyTo(reader, writer);
+      if (robotTime % actualUpdateTime < updateLimit 
+          && robotTime % actualUpdateTime > 0) {
 
         reader.forEach( (index, red, green, blue) -> {
           if ((1.5 * (Math.sin(randomOffset - Math.random())) + (index / (double) reader.getLength())) > 1.275) {
             writer.setRGB(index, 0, 0, 0);
           } else {
-            writer.setRGB(index, red, green, blue);
+            writer.setRGB(index, tempBuffer.getRed(index), tempBuffer.getGreen(index), tempBuffer.getBlue(index));
           }
         });
       }
@@ -246,12 +261,155 @@ public class GlitchLEDPatterns {
    * This pattern creates a fire overlay that makes the given pattern look like it's made of fire. (2025)
    * @param pattern The pattern that the fire overlay applies to.
    */
+  public static LEDPattern oldFire(LEDPattern pattern) {
+    return oldFire(pattern, 0.11);
+  }
+
+  /**
+   * This pattern creates a significantly more complex fire overlay than the previous method, 
+   * and it also allows you to shift the color towards Red, Green, or Blue toward the flame's tip. (2026)
+   * @param pattern The pattern the fire overlays.
+   * @param updateTime The time between updates of the overlay in seconds.
+   * @param shiftColor The color the fire shifts towards (putting in a color other than red, green, or blue shifts it to gray).
+   * @return The fire pattern.
+   */
+  public static LEDPattern fire(LEDPattern pattern, double updateTime, Color shiftColor) {
+    return (reader, writer) -> {
+
+      AddressableLEDBuffer tempBuffer = new AddressableLEDBuffer(reader.getLength());
+      pattern.applyTo(tempBuffer);
+
+      double randomOffset = (Math.random() * Math.PI * 2) + 5;
+      long actualUpdateTime = (long) Seconds.of(updateTime).in(Microseconds);
+      long updateLimit = (long) Seconds.of(0.039).in(Microseconds);
+      long robotTime = RobotController.getTime();
+      double usefulTime = (double) RobotController.getTime();
+
+      if (robotTime % actualUpdateTime < updateLimit 
+          && robotTime % actualUpdateTime > 0) {
+
+        reader.forEach( (index, red, green, blue) -> {
+
+          int r = tempBuffer.getRed(index);
+          int g = tempBuffer.getGreen(index);
+          int b = tempBuffer.getBlue(index);
+
+          if (shiftColor != null) {
+            if (shiftColor == Color.kRed) {
+              g = (int) Math.min(g, (0.25 * reader.getLength() * g) / (index + 1));
+              b = (int) Math.min(b, (0.25 * reader.getLength() * b) / (index + 1));
+            } else if (shiftColor == Color.kGreen) {
+              r = (int) Math.min(r, (0.25 * reader.getLength() * r) / (index + 1));
+              b = (int) Math.min(b, (0.25 * reader.getLength() * b) / (index + 1));
+            } else if (shiftColor == Color.kBlue) {
+              r = (int) Math.min(r, (0.25 * reader.getLength() * r) / (index + 1));
+              g = (int) Math.min(g, (0.25 * reader.getLength() * g) / (index + 1));
+            } else {
+              r = (int) Math.min(r, (0.4 * reader.getLength() * r) / (index + 1));
+              g = (int) Math.min(g, (0.4 * reader.getLength() * g) / (index + 1));
+              b = (int) Math.min(b, (0.4 * reader.getLength() * b) / (index + 1));
+            }
+          }
+
+          boolean isLit = false;
+          boolean nearLow = false;
+          boolean nearHigh = false;
+          boolean midLow = false;
+          boolean midHigh = false;
+          boolean farLow = false;
+          boolean farHigh = false;
+          
+          double flame = ((Math.sin(usefulTime) 
+              + Math.sin(usefulTime / randomOffset) 
+              + Math.pow(Math.sin(usefulTime), 2) 
+              + 3*(Math.pow(Math.sin(usefulTime / randomOffset), 2))) 
+              * reader.getLength() / 6) + 0.1;
+
+          double energy = Math.cos(usefulTime) 
+                        + (Math.cos(usefulTime / randomOffset) * 1/randomOffset) 
+                        + (2 * Math.sin(usefulTime) * Math.cos(usefulTime))
+                        + (6 * Math.sin(usefulTime / randomOffset) * Math.cos(usefulTime / randomOffset) * 1/randomOffset);
+
+          if (r + g + b != 0) {
+            isLit = true;
+          }
+          if (index < reader.getLength() - 1 && reader.getRed(index+1) + reader.getGreen(index+1) + reader.getBlue(index+1) != 0) {
+            nearHigh = true;
+          }
+          if (index < reader.getLength() - 2 && reader.getRed(index+2) + reader.getGreen(index+2) + reader.getBlue(index+2) != 0) {
+            midHigh = true;
+          }
+          if (index < reader.getLength() - 3 && reader.getRed(index+3) + reader.getGreen(index+3) + reader.getBlue(index+3) != 0) {
+            farHigh = true;
+          }
+          if (index > 2 && (reader.getRed(index-1) + reader.getGreen(index-1) + reader.getBlue(index-1)) != 0) {
+            nearLow = true;
+          }
+          if (index > 3 && (reader.getRed(index-2) + reader.getGreen(index-2) + reader.getBlue(index-2)) != 0) {
+            midLow = true;
+          }
+          if (index > 4 && (reader.getRed(index-3) + reader.getGreen(index-3) + reader.getBlue(index-3)) != 0) {
+            farLow = true;
+          }
+
+          if (index < flame) {
+            if (energy > 0 && Math.random() < 0.8) {
+              writer.setRGB(index, r, g, b);
+            } else if (energy > 0) {
+              writer.setRGB(index, 0, 0, 0);
+            } else if (energy < 0 && Math.random() < 0.9) {
+              writer.setRGB(index, r, g, b);
+            } else {
+              writer.setRGB(index, 0, 0, 0);
+            }
+          }/*this is when it is outside the main flame body*/ else if (energy > 0 && Math.random() > 0.5 
+              && ((!isLit && (nearHigh || midHigh || farHigh))
+              || (isLit && (nearLow && midLow && farLow)))) {
+            writer.setRGB(index, r, g, b);
+          } else if (energy > 0) {
+            writer.setRGB(index, 0, 0, 0);
+          } else if (energy < 0 && Math.random() * reader.getLength() < flame) {
+            writer.setRGB(index, r, g, b);
+          } else {
+            writer.setRGB(index, 0, 0, 0);
+          }
+        });
+      }
+    };
+  }
+
+  /**
+   * This pattern creates a significantly more complex fire overlay than the previous method. (2026)
+   * @param pattern The pattern the fire overlays.
+   * @param updateTime The time between updates of the overlay in seconds.
+   * @return The fire pattern.
+   */
+  public static LEDPattern fire(LEDPattern pattern, double updateTime) {
+    return fire(pattern, updateTime, null);
+  }
+
+  /**
+   * This pattern creates a significantly more complex fire overlay than the previous method, 
+   * and it also allows you to shift the color towards Red, Green, or Blue toward the flame's tip. (2026)
+   * @param pattern The pattern the fire overlays.
+   * @param shiftColor The color the fire shifts towards (putting in a color other than red, green, or blue shifts it to gray).
+   * @return The fire pattern.
+   */
+  public static LEDPattern fire(LEDPattern pattern, Color shiftColor) {
+    return fire(pattern, 0.11, shiftColor);
+  }
+
+  /**
+   * This pattern creates a significantly more complex fire overlay than the previous method. (2026)
+   * @param pattern The pattern the fire overlays.
+   * @return The fire pattern.
+   */
   public static LEDPattern fire(LEDPattern pattern) {
-    return fire(pattern, 0.07);
+    return fire(pattern, 0.11, null);
   }
 
   /** 
-  * This method creates a fun random noise overlay pattern that took way too long to make. (2025)
+  * This method creates a fun random noise overlay pattern utilizing cellular automata that took way too long to make. (2026)
   *
   * @param pattern The pattern that the random noise overlays.
   * @param updateTime The time in seconds between updates of the random noise overlay.
@@ -317,11 +475,10 @@ public class GlitchLEDPatterns {
                 tempBuffer.getRed((int)(thisRandom * reader.getLength())), 
                 tempBuffer.getGreen((int)(thisRandom * reader.getLength())), 
                 tempBuffer.getBlue((int)(thisRandom * reader.getLength())));
-                
+
             } else {
               pattern.applyTo(reader, writer);
             } 
-            // TODO: Make sure that this works the way you want it and change the default pattern back to normal once you're done
           }
     };
   }
