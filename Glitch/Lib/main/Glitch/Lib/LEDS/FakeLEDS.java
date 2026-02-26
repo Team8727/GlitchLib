@@ -13,13 +13,13 @@ public class FakeLEDS extends AbstractLEDS {
         super(100, 25, -25, 50);
 
         shortSide = getSections().get(0);
-        shortSide.setBase(GlitchLEDPatterns.fire(GlitchLEDPatterns.funGradient, Color.kRed));
+        shortSide.setBase(GlitchLEDPatterns.ripple(GlitchLEDPatterns.green));
 
         shortReversed = getSections().get(1);
-        shortReversed.setBase(GlitchLEDPatterns.fire(GlitchLEDPatterns.funGradient, Color.kGreen));
+        shortReversed.setBase(GlitchLEDPatterns.ripple(GlitchLEDPatterns.ace));
 
         longSide = getSections().get(2);
-        longSide.setBase(GlitchLEDPatterns.fire(GlitchLEDPatterns.funGradient, Color.kBlue));
+        longSide.setBase(GlitchLEDPatterns.ripple(GlitchLEDPatterns.funGradient));
     }
 
     public void start() {

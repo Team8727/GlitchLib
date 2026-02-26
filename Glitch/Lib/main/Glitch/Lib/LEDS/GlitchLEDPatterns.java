@@ -18,7 +18,7 @@ import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Seconds;
 
 /** 
- * This class contains all the premade LED patterns ever used by Team Glitch 2.0
+ * This class contains all the premade LED patterns ever used by Team Glitch 2.0 from 2025 onwards.
  * Feel free to add more!
  */
 public class GlitchLEDPatterns {
@@ -490,5 +490,71 @@ public class GlitchLEDPatterns {
    */
   public static LEDPattern randomNoise(LEDPattern pattern) {
     return randomNoise(pattern, 0.05);
+  }
+
+  /**
+   * Creates a overlay pattern that kinda looks like ripples moving through water. (2026)
+   * @param pattern The pattern the ripples overlay.
+   * @param updateTime The time between updates of the overlay in seconds.
+   * @param frequency The rate at which the ripples move.
+   * @param wavelength The size of an individual ripple and the distance between them.
+   * @return The ripple pattern.
+   */
+  public static LEDPattern ripple(LEDPattern pattern, double updateTime, double frequency, double wavelength) {
+
+    double randomOffset = Math.random() * 100;
+
+    return (reader, writer) -> {
+
+      AddressableLEDBuffer tempBuffer = new AddressableLEDBuffer(reader.getLength());
+      pattern.applyTo(tempBuffer);
+
+      long actualUpdateTime = (long) Seconds.of(updateTime).in(Microseconds);
+      long updateLimit = (long) Seconds.of(0.039).in(Microseconds);
+
+      double usefulTime = (double) ((frequency * RobotController.getTime()) / 1000000);
+
+      double multiplier = tempBuffer.getLength() / wavelength;
+
+      if (RobotController.getTime() % actualUpdateTime < updateLimit 
+          && RobotController.getTime() % actualUpdateTime > 0) {
+            reader.forEach((i, red, green, blue) -> {
+
+              int r = tempBuffer.getRed(i);
+              int g = tempBuffer.getGreen(i);
+              int b = tempBuffer.getBlue(i);
+
+              if (Math.sin(((((i * Math.PI / 6) + (usefulTime * Math.PI / 12))) / multiplier) + randomOffset) >= 0.8) {
+                writer.setRGB(i, r, g, b);
+              } else if (Math.sin(((((i * Math.PI / 6) - (usefulTime * Math.PI / 12))) / multiplier) + randomOffset) >= 0.8) {
+                writer.setRGB(i, r, g, b);
+              } else {
+                writer.setRGB(i, 0, 0, 0);
+              }
+            });
+          }
+    };
+  }
+
+  /**
+   * Creates a overlay pattern that kinda looks like ripples moving through water. (2026)
+   * @param pattern The pattern the ripples overlay.
+   * @param frequency The rate at which the ripples move.
+   * @param wavelength The size of an individual ripple and the distance between them.
+   * @return The ripple pattern.
+   */
+  public static LEDPattern ripple(LEDPattern pattern, double frequency, double wavelength) {
+    return ripple(pattern, 0.11, frequency, wavelength);
+  }
+
+  /**
+   * Creates a overlay pattern that kinda looks like ripples moving through water. (2026)
+   * @param pattern The pattern the ripples overlay.
+   * @param frequency The rate at which the ripples move.
+   * @param wavelength The size of an individual ripple and the distance between them.
+   * @return The ripple pattern.
+   */
+  public static LEDPattern ripple(LEDPattern pattern) {
+    return ripple(pattern, 0.11, 3, 4);
   }
 }
