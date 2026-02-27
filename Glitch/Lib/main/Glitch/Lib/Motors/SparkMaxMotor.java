@@ -63,6 +63,13 @@ public class SparkMaxMotor implements Motor{
   }
 
   @Override
+  public void zeroPosition() {
+    if (!hasAbsoluteEncoder) {
+      motor.getEncoder().setPosition(0);
+    }
+  }
+
+  @Override
   public double getPosition() {
     if (hasAbsoluteEncoder) {
       return motor.getAbsoluteEncoder().getPosition();

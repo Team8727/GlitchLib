@@ -3,19 +3,16 @@ package Glitch.Lib.BaseMechanisms;
 import Glitch.Lib.Motors.Motor;
 import Glitch.Lib.NetworkTableLogger;
 import edu.wpi.first.math.controller.ArmFeedforward;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 
-public abstract class Pivot extends SubsystemBase {
+public abstract class SimplePivot extends SubsystemBase {
 
   private final Motor motor;
 
-  private final TrapezoidProfile profile;
-  private TrapezoidProfile.State goal = new TrapezoidProfile.State(0, 0);
-  private TrapezoidProfile.State setpoint = new TrapezoidProfile.State(0, 0);
+  private double targetPosition = 0;
 
   private final ArmFeedforward pivotFeedforward;
 
@@ -25,37 +22,26 @@ public abstract class Pivot extends SubsystemBase {
 
   private final double allowedError;
 
-  private double lastPosition = 0;
-  private double rolloverCount = 0;
-  private double currentAdjustedPosition = 0;
-
   /**
-   * Creates a new Pivot.
+   * Creates a new SimplePivot.
    *
    * @param motor                     The motor to use for the pivot.
    * @param zeroedAngelFromHorizontal The angle from horizontal to zero the pivot at
-   * @param maxVelocity               The maximum velocity of the pivot
-   * @param maxAcceleration           The maximum acceleration of the pivot
    * @param allowedError              The allowed error for the pivot in degrees
    * @param ks                        The static gain of the pivot
    * @param kg                        The gravity gain of the pivot
    * @param kv                        The velocity gain of the pivot
    * @param ka                        The acceleration gain of the pivot
    */
-  public Pivot(
+  public SimplePivot(
     Motor motor,
     double zeroedAngelFromHorizontal,
-    double maxVelocity,
-    double maxAcceleration,
     double allowedError,
     double ks,
     double kg,
     double kv,
     double ka) {
     logger = new NetworkTableLogger(this.getName());
-
-    profile = new TrapezoidProfile(
-      new TrapezoidProfile.Constraints(maxVelocity, maxAcceleration));
 
     pivotFeedforward = new ArmFeedforward(ks, kg, kv, ka);
 
@@ -64,36 +50,29 @@ public abstract class Pivot extends SubsystemBase {
     this.zeroedAngelFromHorizontal = zeroedAngelFromHorizontal;
 
     this.motor = motor;
-    this.lastPosition = motor.getPosition();
-    this.currentAdjustedPosition = this.lastPosition;
   }
 
   /**
-   * Creates a new Pivot.
+   * Creates a new SimplePivot.
    *
    * @param motor                     The motor to use for the pivot.
    * @param zeroedAngelFromHorizontal The angle from horizontal to zero the pivot at
-   * @param maxVelocity               The maximum velocity of the pivot
-   * @param maxAcceleration           The maximum acceleration of the pivot
    * @param allowedError              The allowed error for the pivot in degrees
    */
-  public Pivot(
+  public SimplePivot(
     Motor motor,
     double zeroedAngelFromHorizontal,
-    double maxVelocity,
-    double maxAcceleration,
     double allowedError) {
-    this(motor, zeroedAngelFromHorizontal, maxVelocity, maxAcceleration, allowedError, 0, 0, 0, 0);
+    this(motor, zeroedAngelFromHorizontal, allowedError, 0, 0, 0, 0);
   }
 
   /**
-   * Sets the pivot position using a trapezoidal profile.
+   * Sets the pivot position.
    *
    * @param angleDegrees The angle in degrees to set the pivot to.
    */
   public void setPosition(double angleDegrees) {
-    goal = new TrapezoidProfile.State(angleDegrees, 0);
-    setpoint = new TrapezoidProfile.State(currentAdjustedPosition * 360, 0);
+    targetPosition = angleDegrees;
   }
 
   /**
@@ -109,17 +88,21 @@ public abstract class Pivot extends SubsystemBase {
 
   // set pivot position
   private void goToSetpoint() {
+    // Calculate feedforward based on position (holding voltage)
+    // Assuming standard ArmFeedforward.calculate(angleRadians, velocityRadiansPerSec)
+    double angleRadians = Math.toRadians(zeroedAngelFromHorizontal - (getPosition() * 360));
     motor.setPosition(
-      setpoint.position / 360,
-      pivotFeedforward.calculateWithVelocities(
-        zeroedAngelFromHorizontal - (currentAdjustedPosition * 360),
-        motor.getVelocity(),
-        setpoint.velocity)
+      targetPosition / 360,
+      pivotFeedforward.calculate(angleRadians, 0)
     );
   }
 
   public void setDutyCycle(double speed) {
     motor.setDutyCycle(speed);
+  }
+
+  public void zeroEncoder(){
+    motor.zeroPosition();
   }
 
   /**
@@ -128,7 +111,7 @@ public abstract class Pivot extends SubsystemBase {
    * @return True if the pivot is within the allowed error of the goal position, false otherwise.
    */
   public boolean isAtSetpoint() {
-    return Math.abs(setpoint.position - currentAdjustedPosition * 360) <= allowedError;
+    return Math.abs(targetPosition - getPosition() * 360) <= allowedError;
   }
 
   /**
@@ -137,7 +120,7 @@ public abstract class Pivot extends SubsystemBase {
    * @return The current position of the pivot.
    */
   public double getPosition() {
-    return currentAdjustedPosition;
+    return motor.getPosition();
   }
 
   /**
@@ -152,20 +135,8 @@ public abstract class Pivot extends SubsystemBase {
   // This method will be called once per scheduler run
   @Override
   public void periodic() {
-    double rawPos = motor.getPosition();
-    if (rawPos - lastPosition < -0.5) {
-      rolloverCount++;
-    } else if (rawPos - lastPosition > 0.5) {
-      rolloverCount--;
-    }
-    lastPosition = rawPos;
-    currentAdjustedPosition = rolloverCount + rawPos;
-
-    logger.logDouble("position", currentAdjustedPosition * 360);
-    logger.logDouble("setpoint", setpoint.position);
-    logger.logDouble("goal", goal.position);
-
-    setpoint = profile.calculate(0.02, setpoint, goal);
+    logger.logDouble("position", motor.getPosition() * 360);
+    logger.logDouble("targetPosition", targetPosition);
 
     goToSetpoint();
   }

@@ -29,6 +29,8 @@ public interface Motor {
    */
   void setPosition(double position);
 
+  void zeroPosition();
+
   /**
    * Gets the current position of the motor.
    *
