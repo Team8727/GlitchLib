@@ -2,7 +2,7 @@ package Glitch.Lib.BaseMechanisms;
 
 import Glitch.Lib.Motors.Motor;
 import Glitch.Lib.NetworkTableLogger;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.*;
 
 public abstract class Roller extends SubsystemBase {
 
@@ -28,6 +28,7 @@ public abstract class Roller extends SubsystemBase {
    */
   public void setSpeedDutyCycle(double speed) {
     motor.setDutyCycle(speed);
+    logger.logDouble("set cycle", speed);
   }
 
   /**
@@ -37,6 +38,7 @@ public abstract class Roller extends SubsystemBase {
    */
   public void setSpeedVelocity(double speed) {
     motor.setVelocity(speed);
+    logger.logDouble("set velocity", speed);
   }
 
   /**
