@@ -31,6 +31,10 @@ public abstract class Roller extends SubsystemBase {
     logger.logDouble("set cycle", speed);
   }
 
+  public void setSpeedVoltage(double volts) {
+    motor.setVoltage(volts);
+  }
+
   /**
    * Sets the speed of the roller motor in velocity mode.
    *

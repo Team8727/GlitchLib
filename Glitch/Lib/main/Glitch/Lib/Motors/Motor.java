@@ -15,6 +15,8 @@ public interface Motor {
    */
   void setDutyCycle(double dutyCycle);
 
+  void setVoltage(double volts);
+
   /**
    * Sets the motor to a given position.
    *
