@@ -87,7 +87,12 @@ public class TestModules {
       this.position = position;
     }
 
-    @Override
+  @Override
+  public void zeroPosition() {
+
+  }
+
+  @Override
     public double getPosition() {
       return position;
     }
@@ -120,5 +125,4 @@ public class TestModules {
       reverseLimit = value;
     }
   }
-
 }

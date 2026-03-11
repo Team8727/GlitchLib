@@ -47,6 +47,11 @@ public class SparkMaxMotor implements Motor{
   }
 
   @Override
+  public void setVoltage(double volts) {
+    motor.setVoltage(volts);
+  }
+
+  @Override
   public void setPosition(double position, double feedforward) {
     motorController.setSetpoint(
       position,
@@ -60,6 +65,13 @@ public class SparkMaxMotor implements Motor{
     motorController.setSetpoint(
       position,
       SparkBase.ControlType.kPosition);
+  }
+
+  @Override
+  public void zeroPosition() {
+    if (!hasAbsoluteEncoder) {
+      motor.getEncoder().setPosition(0);
+    }
   }
 
   @Override

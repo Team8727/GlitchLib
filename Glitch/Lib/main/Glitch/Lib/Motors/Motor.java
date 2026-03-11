@@ -15,6 +15,8 @@ public interface Motor {
    */
   void setDutyCycle(double dutyCycle);
 
+  void setVoltage(double volts);
+
   /**
    * Sets the motor to a given position.
    *
@@ -28,6 +30,8 @@ public interface Motor {
    * @param position The position to set the motor to.
    */
   void setPosition(double position);
+
+  void zeroPosition();
 
   /**
    * Gets the current position of the motor.
