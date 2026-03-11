@@ -31,6 +31,9 @@ public abstract class AbstractLEDS extends SubsystemBase {
     private double durationSeconds = infiniteDurationSeconds;
     private double elapsedSeconds = 0.0;
 
+    /**
+     * The pattern that the section will return to once a timed pattern has completed. Defaults to kOff if not set.
+     */
     public LEDPattern basePattern;
 
     private Section(int startIndex, int endIndex) {
@@ -165,10 +168,10 @@ public abstract class AbstractLEDS extends SubsystemBase {
   public List<Section> getSections() {
     return sectionList;
   }
-
   
   /**
    * Updates all LED sections and applies the data buffer to the LED strip.
+   * If you are confused as to why the strip is constructing in simulation but the lights aren't turning on, make sure you put super.periodic() in the periodic method of your LED subsystem.
    */
   @Override
   public void periodic() {

@@ -124,5 +124,11 @@ public class TestModules {
     public void setReverseLimit(boolean value) {
       reverseLimit = value;
     }
+
+    @Override
+    public void setVoltage(double volts) {
+      // TODO Auto-generated method stub
+      throw new UnsupportedOperationException("Unimplemented method 'setVoltage'");
+    }
   }
 }
