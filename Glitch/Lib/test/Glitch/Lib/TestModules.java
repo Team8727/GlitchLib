@@ -76,7 +76,11 @@ public class TestModules {
       this.duty = dutyCycle;
     }
 
-    @Override
+  @Override
+  public void setVoltage(double volts) {
+  }
+
+  @Override
     public void setPosition(double position, double feedforward) {
       this.position = position;
       this.lastFeedforward = feedforward;
