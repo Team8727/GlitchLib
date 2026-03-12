@@ -29,6 +29,8 @@ public abstract class Pivot extends SubsystemBase {
   private double rolloverCount = 0;
   private double currentAdjustedPosition = 0;
 
+  private boolean disabled = false;
+
   /**
    * Creates a new Pivot.
    *
@@ -167,6 +169,16 @@ public abstract class Pivot extends SubsystemBase {
 
     setpoint = profile.calculate(0.02, setpoint, goal);
 
-    goToSetpoint();
+    if (!disabled) {
+      goToSetpoint();
+    }
+  }
+
+  public boolean getDisabled() {
+    return disabled;
+  }
+
+  public void setDisabled(boolean disabled) {
+    this.disabled = disabled;
   }
 }
