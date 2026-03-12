@@ -1,17 +1,16 @@
 package Glitch.Lib;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-
+import Glitch.Lib.LEDs.AbstractLEDS;
+import Glitch.Lib.LEDs.FakeLEDS;
+import edu.wpi.first.wpilibj.AddressableLEDBuffer;
+import edu.wpi.first.wpilibj.LEDPattern;
+import edu.wpi.first.wpilibj.util.Color;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import Glitch.Lib.LEDS.AbstractLEDS;
-import Glitch.Lib.LEDS.FakeLEDS;
-import edu.wpi.first.wpilibj.AddressableLEDBuffer;
-import edu.wpi.first.wpilibj.LEDPattern;
-import edu.wpi.first.wpilibj.util.Color;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class LEDTests {
