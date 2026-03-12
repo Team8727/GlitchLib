@@ -15,6 +15,7 @@ public class FakeLEDS extends AbstractLEDS {
         shortSide = getSections().get(0);
         shortSide.setBase(GlitchLEDPatterns.ripple(GlitchLEDPatterns.green));
 
+
         shortReversed = getSections().get(1);
         shortReversed.setBase(GlitchLEDPatterns.ripple(GlitchLEDPatterns.ace));
 
