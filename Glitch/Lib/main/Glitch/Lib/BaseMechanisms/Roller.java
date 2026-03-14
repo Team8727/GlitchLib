@@ -2,7 +2,7 @@ package Glitch.Lib.BaseMechanisms;
 
 import Glitch.Lib.Motors.Motor;
 import Glitch.Lib.NetworkTableLogger;
-import edu.wpi.first.wpilibj2.command.*;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public abstract class Roller extends SubsystemBase {
 
@@ -31,6 +31,11 @@ public abstract class Roller extends SubsystemBase {
     logger.logDouble("set cycle", speed);
   }
 
+  /**
+   * Sets the voltage of the roller motor in voltage mode.
+   *
+   * @param volts The voltage to set the motor to
+   */
   public void setSpeedVoltage(double volts) {
     motor.setVoltage(volts);
   }
