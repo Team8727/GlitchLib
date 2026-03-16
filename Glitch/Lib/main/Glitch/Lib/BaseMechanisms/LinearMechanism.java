@@ -96,7 +96,8 @@ public abstract class LinearMechanism extends SubsystemBase {
    * @return True if the mechanism is at the setpoint, false otherwise.
    */
   public boolean isAtSetpoint() {
-    return Math.abs(motor.getPosition() - goal.position) < allowedError;
+    // Compare positions in meters: convert motor position to meters via getPosition()
+    return Math.abs(getPosition() - goal.position) < allowedError;
   }
 
   /**
@@ -105,7 +106,8 @@ public abstract class LinearMechanism extends SubsystemBase {
    * @return The current position in meters.
    */
   public double getPosition() {
-    return motor.getPosition()* rotationsToMeter;
+    // rotationsToMeter is rotations per meter, so meters = rotations / rotationsToMeter
+    return motor.getPosition() / rotationsToMeter;
   }
 
   /**
