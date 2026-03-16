@@ -135,8 +135,8 @@ public abstract class SimplePivot extends SubsystemBase {
   // This method will be called once per scheduler run
   @Override
   public void periodic() {
-    logger.logDouble("position", motor.getPosition() * 360);
-    logger.logDouble("targetPosition", targetPosition);
+    logger.log("position", motor.getPosition() * 360);
+    logger.log("targetPosition", targetPosition);
 
     goToSetpoint();
   }

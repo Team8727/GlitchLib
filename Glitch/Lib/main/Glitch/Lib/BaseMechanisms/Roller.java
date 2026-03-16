@@ -28,7 +28,7 @@ public abstract class Roller extends SubsystemBase {
    */
   public void setSpeedDutyCycle(double speed) {
     motor.setDutyCycle(speed);
-    logger.logDouble("set cycle", speed);
+    logger.log("set cycle", speed);
   }
 
   /**
@@ -47,7 +47,7 @@ public abstract class Roller extends SubsystemBase {
    */
   public void setSpeedVelocity(double speed) {
     motor.setVelocity(speed);
-    logger.logDouble("set velocity", speed);
+    logger.log("set velocity", speed);
   }
 
   /**
@@ -104,10 +104,10 @@ public abstract class Roller extends SubsystemBase {
   // This method will be called once per scheduler run
   @Override
   public void periodic() {
-    logger.logDouble("position", motor.getPosition());
-    logger.logDouble("velocity", motor.getVelocity());
-    logger.logDouble("current", motor.getCurrent());
-    logger.logBoolean("forward limit switch", motor.getForwardLimitSwitch());
-    logger.logBoolean("reverse limit switch", motor.getReverseLimitSwitch());
+    logger.log("position", motor.getPosition());
+    logger.log("velocity", motor.getVelocity());
+    logger.log("current", motor.getCurrent());
+    logger.log("forward limit switch", motor.getForwardLimitSwitch());
+    logger.log("reverse limit switch", motor.getReverseLimitSwitch());
   }
 }

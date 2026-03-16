@@ -6,11 +6,18 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.*;
 import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.struct.Struct;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Custom NetworkTable logger created by Glitch 2.0. This logger is used to log values to
+ * the network table (can be seen using AdvantageScope, Glass, Elastic, etc.). ALL log() methods 
+ * for different types of values must be placed in a periodically updating part of code for the 
+ * subsystem (like periodic()) in order to update properly.
+ */
 public class NetworkTableLogger {
   // NetworkTable to log to
   private final NetworkTable table;
@@ -20,29 +27,25 @@ public class NetworkTableLogger {
   private final ConcurrentHashMap<String, DoublePublisher> doublePublishers = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<String, IntegerPublisher> integerPublishers = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<String, StringPublisher> stringPublishers = new ConcurrentHashMap<>();
-  private final ConcurrentHashMap<String, StructPublisher<Pose2d>> pose2dPublishers = new ConcurrentHashMap<>();
-  private final ConcurrentHashMap<String, StructPublisher<Pose3d>> pose3dPublishers = new ConcurrentHashMap<>();
-  private final ConcurrentHashMap<String, StructArrayPublisher<SwerveModuleState>> swerveModuleStatePublishers = new ConcurrentHashMap<>();
-  private final ConcurrentHashMap<String, StructPublisher<ChassisSpeeds>> chassisSpeedsPublishers = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, FloatPublisher> floatPublishers = new ConcurrentHashMap<>();
+  
+  private final ConcurrentHashMap<String, BooleanArrayPublisher> booleanArrayPublishers = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, DoubleArrayPublisher> doubleArrayPublishers = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, IntegerArrayPublisher> integerArrayPublishers = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, StringArrayPublisher> stringArrayPublishers = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, FloatArrayPublisher> floatArrayPublishers = new ConcurrentHashMap<>();
+
+  private final ConcurrentHashMap<String, StructPublisher<?>> structPublishers = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, StructArrayPublisher<?>> structArrayPublishers = new ConcurrentHashMap<>();
   
   // For Field2d and other Sendable support
   private static final Map<String, Sendable> tablesToData = new HashMap<>();
 
   /**
-   * Custom NetworkTable logger created by Glitch 2.0 in 2025. This logger is used to log values to
-   * the network table (can be seen using AdvantageScope, Glass, Elastic, etc.). ALL log___() methods for different types of values must be placed in a periodically updating part of code for the subsystem (like periodic()) in order to update properly. 
-   *
    * @param subsystemFor the subsystem this logger will log values for
    */
   public NetworkTableLogger(String subsystemFor) {
     NetworkTableInstance inst = NetworkTableInstance.getDefault();
-
-    /*
-      Get the table within the default instance that contains the data. There can
-      be as many tables as you like and exist to make it easier to organize
-      your data. In this case, it's a table called what the parameter
-      subsystemFor holds: (the subsystem to log for).
-     */
     table = inst.getTable(subsystemFor);
   }
 
@@ -55,148 +58,153 @@ public class NetworkTableLogger {
     return table;
   }
 
+  // --- Primitives ---
+
   /**
-   * Log method for logging a double to the network table (can be seen using AdvantageScope, Glass,
-   * Elastic, etc.)
-   *
-   * @param key the key, a string, that will represent the value
-   * @param value the value (double) that will be logged
+   * Log a double value
+   * @param key the key to log to
+   * @param value the value to log
    */
-  public void logDouble(String key, double value) {
-    if (!doublePublishers.containsKey(key)) {
-      doublePublishers.put(key, table.getDoubleTopic(key).publish());
-    }
-
-    doublePublishers.get(key).set(value);
-  }
-
-    /**
-   * Log method for logging an integer to the network table (can be seen using AdvantageScope, Glass,
-   * Elastic, etc.)
-   *
-   * @param key the key, a string, that will represent the value
-   * @param value the value (int) that will be logged
-   */
-  public void logInt(String key, int value) {
-    if (!integerPublishers.containsKey(key)) {
-      integerPublishers.put(key, table.getIntegerTopic(key).publish());
-    }
-
-    integerPublishers.get(key).set(value);
+  public void log(String key, double value) {
+    doublePublishers.computeIfAbsent(key, k -> table.getDoubleTopic(k).publish()).set(value);
   }
 
   /**
-   * Log method for logging a boolean to the network table (can be seen using AdvantageScope, Glass,
-   * Elastic, etc.)
-   *
-   * @param key the key, a string, that will represent the value
-   * @param value the value (boolean) that will be logged
+   * Log an integer value
+   * @param key the key to log to
+   * @param value the value to log
    */
-  public void logBoolean(String key, boolean value) {
-    if (!booleanPublishers.containsKey(key)) {
-      booleanPublishers.put(key, table.getBooleanTopic(key).publish());
-    }
-
-    booleanPublishers.get(key).set(value);
+  public void log(String key, int value) {
+    integerPublishers.computeIfAbsent(key, k -> table.getIntegerTopic(k).publish()).set(value);
+  }
+  
+  /**
+   * Log a long value
+   * @param key the key to log to
+   * @param value the value to log
+   */
+  public void log(String key, long value) {
+    integerPublishers.computeIfAbsent(key, k -> table.getIntegerTopic(k).publish()).set(value);
   }
 
   /**
-   * Log method for logging a string to the network table (can be seen using AdvantageScope, Glass,
-   * Elastic, etc.)
-   *
-   * @param key the key, a string, that will represent the value
-   * @param value the value (string) that will be logged
+   * Log a boolean value
+   * @param key the key to log to
+   * @param value the value to log
    */
-  public void logString(String key, String value) {
-    if (!stringPublishers.containsKey(key)) {
-      stringPublishers.put(key, table.getStringTopic(key).publish());
-    }
-
-    stringPublishers.get(key).set(value);
+  public void log(String key, boolean value) {
+    booleanPublishers.computeIfAbsent(key, k -> table.getBooleanTopic(k).publish()).set(value);
   }
 
   /**
-   * Log method for logging a Pose2d to the network table (can be seen using AdvantageScope, Glass,
-   * Elastic, etc.)
-   *
-   * @param key the key, a string, that will represent the value
-   * @param pose2d the value (Pose2d) that will be logged
+   * Log a String value
+   * @param key the key to log to
+   * @param value the value to log
    */
-  public void logPose2d(String key, Pose2d pose2d) {
-    if (!pose2dPublishers.containsKey(key)) {
-      pose2dPublishers.put(key, table.getStructTopic(key, Pose2d.struct).publish());
-    }
+  public void log(String key, String value) {
+    stringPublishers.computeIfAbsent(key, k -> table.getStringTopic(k).publish()).set(value);
+  }
+  
+  /**
+   * Reusable buffers for converting int[] to long[] to reduce GC pressure.
+   * One buffer is kept per distinct input length.
+   */
+  private final Map<Integer, long[]> intArrayBuffers = new HashMap<>();
 
-    pose2dPublishers.get(key).set(pose2d);
+  /**
+   * Log a float value
+   * @param key the key to log to
+   * @param value the value to log
+   */
+  public void log(String key, float value) {
+    floatPublishers.computeIfAbsent(key, k -> table.getFloatTopic(k).publish()).set(value);
+  }
+
+  // --- Primitive Arrays ---
+
+  public void log(String key, double[] value) {
+    doubleArrayPublishers.computeIfAbsent(key, k -> table.getDoubleArrayTopic(k).publish()).set(value);
+  }
+
+  public void log(String key, int[] value) {
+    long[] longArray = intArrayBuffers.computeIfAbsent(value.length, len -> new long[len]);
+    for (int i = 0; i < value.length; i++) {
+      longArray[i] = value[i];
+    }
+    integerArrayPublishers.computeIfAbsent(key, k -> table.getIntegerArrayTopic(k).publish()).set(longArray);
+  }
+  
+  public void log(String key, long[] value) {
+    integerArrayPublishers.computeIfAbsent(key, k -> table.getIntegerArrayTopic(k).publish()).set(value);
+  }
+
+  public void log(String key, boolean[] value) {
+    booleanArrayPublishers.computeIfAbsent(key, k -> table.getBooleanArrayTopic(k).publish()).set(value);
+  }
+
+  public void log(String key, String[] value) {
+    stringArrayPublishers.computeIfAbsent(key, k -> table.getStringArrayTopic(k).publish()).set(value);
+  }
+  
+  public void log(String key, float[] value) {
+    floatArrayPublishers.computeIfAbsent(key, k -> table.getFloatArrayTopic(k).publish()).set(value);
+  }
+
+  // --- Generic Struct Support ---
+
+  /**
+   * Log a value using its Struct representation.
+   * @param key the key to log to
+   * @param value the value to log
+   * @param struct the struct definition for the type
+   */
+  @SuppressWarnings("unchecked")
+  public <T> void log(String key, T value, Struct<T> struct) {
+    ((StructPublisher<T>) structPublishers.computeIfAbsent(key, k -> table.getStructTopic(k, struct).publish())).set(value);
   }
 
   /**
-   * Log method for logging a Pose3d to the network table (can be seen using AdvantageScope, Glass,
-   * Elastic, etc.)
-   *
-   * @param key the key, a string, that will represent the value
-   * @param pose3d the value (Pose3d) that will be logged
+   * Log an array of values using their Struct representation.
+   * @param key the key to log to
+   * @param value the value array to log
+   * @param struct the struct definition for the type
    */
-  public void logPose3d(String key, Pose3d pose3d) {
-    if (!pose3dPublishers.containsKey(key)) {
-      pose3dPublishers.put(key, table.getStructTopic(key, Pose3d.struct).publish());
-    }
-
-    pose3dPublishers.get(key).set(pose3d);
+  @SuppressWarnings("unchecked")
+  public <T> void log(String key, T[] value, Struct<T> struct) {
+    ((StructArrayPublisher<T>) structArrayPublishers.computeIfAbsent(key, k -> table.getStructArrayTopic(k, struct).publish())).set(value);
   }
+
+  // --- Common WPILib Types Overloads ---
+
+  public void log(String key, Pose2d value) {
+    log(key, value, Pose2d.struct);
+  }
+
+  public void log(String key, Pose3d value) {
+    log(key, value, Pose3d.struct);
+  }
+
+  public void log(String key, ChassisSpeeds value) {
+    log(key, value, ChassisSpeeds.struct);
+  }
+
+  public void log(String key, SwerveModuleState[] value) {
+    log(key, value, SwerveModuleState.struct);
+  }
+
+  // --- Sendable Support ---
 
   /**
-   * Log method for logging the ServeModuleStates to the network table (can be seen using
-   * AdvantageScope, Glass, Elastic, etc.)
+   * Logs a Sendable to the network table.
    *
    * @param key the key, a string, that will represent the value
-   * @param swerveModuleStateList the value (SwerveModuleState[]) that will be logged
+   * @param sendable the value (Sendable) that will be logged
    */
-  public void logSwerveModuleState(String key, SwerveModuleState[] swerveModuleStateList) {
-    if (!swerveModuleStatePublishers.containsKey(key)) {
-      swerveModuleStatePublishers.put(key, table.getStructArrayTopic(key, SwerveModuleState.struct).publish());
+  public void logSendable(String key, Sendable sendable) {
+    if (!tablesToData.containsKey(key)) {
+        tablesToData.put(key, sendable);
+        // Field2d and other Sendables in NT4 are often handled by SmartDashboard.putData
+        // but for custom tables we might need more logic here if they aren't automatically published.
     }
-
-    swerveModuleStatePublishers.get(key).set(swerveModuleStateList);
   }
-
-  /**
-   * Log method for logging a ChassisSpeeds to the network table (can be seen using AdvantageScope, Glass,
-   * Elastic, etc.)
-   *
-   * @param key the key, a string, that will represent the value
-   * @param chassisSpeeds the value (ChassisSpeeds) that will be logged
-   */
-  public void logChassisSpeeds(String key, ChassisSpeeds chassisSpeeds) {
-    if (!chassisSpeedsPublishers.containsKey(key)) {
-      chassisSpeedsPublishers.put(key, table.getStructTopic(key, ChassisSpeeds.struct).publish());
-    }
-
-    chassisSpeedsPublishers.get(key).set(chassisSpeeds);
-  }
-//
-//  /**
-//   * Logs a Field2d to the network table.
-//   *
-//   * @param key the key, a string, that will represent the value
-//   * @param field2d the value (Field2d) that will be logged
-//   */
-//  public void logField2d(String key, Field2d field2d) {
-//    if (!table.containsKey(key)) {
-//      Sendable sddata = tablesToData.get(key);
-//      if (sddata == null || sddata != field2d) {
-//        tablesToData.put(key, field2d);
-//        NetworkTable dataTable = table.getSubTable(key);
-//        SendableBuilderImpl builder = new SendableBuilderImpl();
-//        builder.setTable(dataTable);
-//        SendableRegistry.publish(field2d, builder);
-//        builder.startListeners();
-//        dataTable.getEntry(".name").setString(key);
-//      }
-//    }
-//
-//    for (Sendable data : tablesToData.values()) {
-//      SendableRegistry.update(data);
-//    }
-//  }
 }

@@ -69,7 +69,7 @@ public abstract class LinearMechanism extends SubsystemBase {
    */
   public void setPosition(double position) {
     goal = new TrapezoidProfile.State(position, 0);
-    setpoint = new TrapezoidProfile.State(motor.getPosition(), 0);
+    setpoint = new TrapezoidProfile.State(getPosition(), 0);
   }
 
   /**
@@ -91,12 +91,19 @@ public abstract class LinearMechanism extends SubsystemBase {
   }
 
   /**
+   * Velocity threshold (in the same units as setpoint.velocity) below which the
+   * mechanism is considered to have effectively reached the goal velocity.
+   */
+  private static final double VELOCITY_AT_GOAL_THRESHOLD = 0.01;
+
+  /**
    * Checks if the mechanism is at the setpoint.
    *
    * @return True if the mechanism is at the setpoint, false otherwise.
    */
   public boolean isAtSetpoint() {
-    return Math.abs(motor.getPosition() - goal.position) < allowedError;
+    // Compare positions in meters: convert motor position to meters via getPosition()
+    return Math.abs(getPosition() - goal.position) < allowedError;
   }
 
   /**
@@ -105,7 +112,8 @@ public abstract class LinearMechanism extends SubsystemBase {
    * @return The current position in meters.
    */
   public double getPosition() {
-    return motor.getPosition()* rotationsToMeter;
+    // rotationsToMeter is rotations per meter, so meters = rotations / rotationsToMeter
+    return motor.getPosition() / rotationsToMeter;
   }
 
   /**
@@ -117,14 +125,17 @@ public abstract class LinearMechanism extends SubsystemBase {
     return motor.getCurrent();
   }
 
-  // This method will be called once per scheduler run
   @Override
   public void periodic() {
-    logger.logDouble("setpoint", setpoint.position);
-    logger.logDouble("position", motor.getPosition());
-    logger.logDouble("goal", goal.position);
+    double currentPosition = getPosition();
+    logger.log("setpoint", setpoint.position);
+    logger.log("position", currentPosition);
+    logger.log("goal", goal.position);
 
-    setpoint = profile.calculate(0.02, setpoint, goal);
+    if (Math.abs(setpoint.position - goal.position) > allowedError
+        || Math.abs(setpoint.velocity) > VELOCITY_AT_GOAL_THRESHOLD) {
+      setpoint = profile.calculate(0.02, setpoint, goal);
+    }
 
     setMotorFFAndPIDPosition(setpoint.position);
   }
