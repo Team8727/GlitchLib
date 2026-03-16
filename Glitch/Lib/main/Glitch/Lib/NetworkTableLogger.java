@@ -106,6 +106,12 @@ public class NetworkTableLogger {
   }
   
   /**
+   * Reusable buffers for converting int[] to long[] to reduce GC pressure.
+   * One buffer is kept per distinct input length.
+   */
+  private final Map<Integer, long[]> intArrayBuffers = new HashMap<>();
+
+  /**
    * Log a float value
    * @param key the key to log to
    * @param value the value to log
@@ -121,7 +127,7 @@ public class NetworkTableLogger {
   }
 
   public void log(String key, int[] value) {
-    long[] longArray = new long[value.length];
+    long[] longArray = intArrayBuffers.computeIfAbsent(value.length, len -> new long[len]);
     for (int i = 0; i < value.length; i++) {
       longArray[i] = value[i];
     }
