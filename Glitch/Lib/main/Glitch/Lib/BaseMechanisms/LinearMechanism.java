@@ -91,6 +91,12 @@ public abstract class LinearMechanism extends SubsystemBase {
   }
 
   /**
+   * Velocity threshold (in the same units as setpoint.velocity) below which the
+   * mechanism is considered to have effectively reached the goal velocity.
+   */
+  private static final double VELOCITY_AT_GOAL_THRESHOLD = 0.01;
+
+  /**
    * Checks if the mechanism is at the setpoint.
    *
    * @return True if the mechanism is at the setpoint, false otherwise.
@@ -126,7 +132,8 @@ public abstract class LinearMechanism extends SubsystemBase {
     logger.log("position", currentPosition);
     logger.log("goal", goal.position);
 
-    if (Math.abs(setpoint.position - goal.position) > allowedError || Math.abs(setpoint.velocity) > 0.01) {
+    if (Math.abs(setpoint.position - goal.position) > allowedError
+        || Math.abs(setpoint.velocity) > VELOCITY_AT_GOAL_THRESHOLD) {
       setpoint = profile.calculate(0.02, setpoint, goal);
     }
 
