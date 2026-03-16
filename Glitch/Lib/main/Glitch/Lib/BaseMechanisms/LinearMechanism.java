@@ -69,7 +69,7 @@ public abstract class LinearMechanism extends SubsystemBase {
    */
   public void setPosition(double position) {
     goal = new TrapezoidProfile.State(position, 0);
-    setpoint = new TrapezoidProfile.State(motor.getPosition(), 0);
+    setpoint = new TrapezoidProfile.State(getPosition(), 0);
   }
 
   /**
@@ -117,14 +117,16 @@ public abstract class LinearMechanism extends SubsystemBase {
     return motor.getCurrent();
   }
 
-  // This method will be called once per scheduler run
   @Override
   public void periodic() {
-    logger.logDouble("setpoint", setpoint.position);
-    logger.logDouble("position", motor.getPosition());
-    logger.logDouble("goal", goal.position);
+    double currentPosition = getPosition();
+    logger.log("setpoint", setpoint.position);
+    logger.log("position", currentPosition);
+    logger.log("goal", goal.position);
 
-    setpoint = profile.calculate(0.02, setpoint, goal);
+    if (Math.abs(setpoint.position - goal.position) > allowedError || Math.abs(setpoint.velocity) > 0.01) {
+      setpoint = profile.calculate(0.02, setpoint, goal);
+    }
 
     setMotorFFAndPIDPosition(setpoint.position);
   }

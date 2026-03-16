@@ -189,7 +189,7 @@ public abstract class RevSwerve extends SubsystemBase {
    */
   public void setNextSimHeading(double headingRadians) {
     simGyro.setNextHeading(headingRadians);
-    networkTableLogger.logDouble("Next Sim Heading", Math.toDegrees(simGyro.nextHeading));
+    networkTableLogger.log("Next Sim Heading", Math.toDegrees(simGyro.nextHeading));
   }
 
   /**
@@ -201,8 +201,8 @@ public abstract class RevSwerve extends SubsystemBase {
 
   @Override
   public void periodic() {
-    networkTableLogger.logDouble("Heading", getHeading().getDegrees());
-    networkTableLogger.logSwerveModuleState("Swerve Module States", getModuleStates());
+    networkTableLogger.log("Heading", getHeading().getDegrees());
+    networkTableLogger.log("Swerve Module States", getModuleStates());
   }
 
   /**
@@ -212,7 +212,7 @@ public abstract class RevSwerve extends SubsystemBase {
   public void setChassisSpeeds(ChassisSpeeds robotRelativeSpeeds) {
     setModuleStates(kinematics.toSwerveModuleStates(robotRelativeSpeeds));
 
-    networkTableLogger.logChassisSpeeds("speeds", robotRelativeSpeeds);
+    networkTableLogger.log("speeds", robotRelativeSpeeds);
 
     if (Robot.isSimulation()) {
       setNextSimHeading(simGyro.nextHeading + robotRelativeSpeeds.omegaRadiansPerSecond * 0.02);
@@ -221,7 +221,7 @@ public abstract class RevSwerve extends SubsystemBase {
 
   private void setModuleStates(SwerveModuleState[] desiredState) {
     SwerveDriveKinematics.desaturateWheelSpeeds(desiredState, maxWheelSpeed);
-    networkTableLogger.logSwerveModuleState("Desired Swerve Module States", desiredState);
+    networkTableLogger.log("Desired Swerve Module States", desiredState);
 
     for (int i = 0; i < modules.length; ++i) {
       modules[i].setTargetState(desiredState[i], true, true);

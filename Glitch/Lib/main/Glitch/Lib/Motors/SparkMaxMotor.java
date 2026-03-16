@@ -1,6 +1,7 @@
 package Glitch.Lib.Motors;
 
 import com.revrobotics.PersistMode;
+import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.*;
 import com.revrobotics.spark.config.SparkMaxConfig;
@@ -12,6 +13,8 @@ import static Glitch.Lib.Motors.SparkConfigurator.getSparkMax;
 public class SparkMaxMotor implements Motor{
   private final SparkMax motor;
   private final SparkClosedLoopController motorController;
+  private final RelativeEncoder encoder;
+  private final SparkAbsoluteEncoder absoluteEncoder;
   private final boolean hasAbsoluteEncoder;
 
   public SparkMaxMotor(SparkMaxConfig config, int CANID, FeedbackSensor encoderType) {
@@ -32,6 +35,8 @@ public class SparkMaxMotor implements Motor{
       PersistMode.kNoPersistParameters);
 
     motorController = motor.getClosedLoopController();
+    encoder = motor.getEncoder();
+    absoluteEncoder = motor.getAbsoluteEncoder();
 
     hasAbsoluteEncoder = encoderType == FeedbackSensor.kAbsoluteEncoder;
   }
@@ -70,16 +75,16 @@ public class SparkMaxMotor implements Motor{
   @Override
   public void zeroPosition() {
     if (!hasAbsoluteEncoder) {
-      motor.getEncoder().setPosition(0);
+      encoder.setPosition(0);
     }
   }
 
   @Override
   public double getPosition() {
     if (hasAbsoluteEncoder) {
-      return motor.getAbsoluteEncoder().getPosition();
+      return absoluteEncoder.getPosition();
     } else {
-      return motor.getEncoder().getPosition();
+      return encoder.getPosition();
     }
   }
 
@@ -91,9 +96,9 @@ public class SparkMaxMotor implements Motor{
   @Override
   public double getVelocity() {
     if (hasAbsoluteEncoder) {
-      return motor.getAbsoluteEncoder().getVelocity();
+      return absoluteEncoder.getVelocity();
     } else {
-      return motor.getEncoder().getVelocity();
+      return encoder.getVelocity();
     }
   }
 
