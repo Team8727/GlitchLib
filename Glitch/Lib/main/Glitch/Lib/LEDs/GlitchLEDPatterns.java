@@ -268,19 +268,20 @@ public class GlitchLEDPatterns {
    * @param pattern The pattern the fire overlays.
    * @param updateTime The time between updates of the overlay in seconds.
    * @param shiftColor The color the fire shifts towards (putting in a color other than red, green, or blue shifts it to gray).
+   * @param speed How fast the wave function of the flame moves (higher is faster, lower is slower, 1 is normal).
    * @return The fire pattern.
    */
-  public static LEDPattern fire(LEDPattern pattern, double updateTime, Color shiftColor) {
+  public static LEDPattern fire(LEDPattern pattern, double updateTime, Color shiftColor, double speed) {
     return (reader, writer) -> {
 
       AddressableLEDBuffer tempBuffer = new AddressableLEDBuffer(reader.getLength());
       pattern.applyTo(tempBuffer);
 
-      double randomOffset = (Math.random() * Math.PI * 2) + 5;
+      double randomOffset = 0.3 + (Math.random()/(1/0.3));
       long actualUpdateTime = (long) Seconds.of(updateTime).in(Microseconds);
       long updateLimit = (long) Seconds.of(0.039).in(Microseconds);
       long robotTime = RobotController.getTime();
-      double usefulTime = (double) RobotController.getTime();
+      double usefulTime = speed * Math.asin(Math.sin((double) RobotController.getTime() / 1000000));
 
       if (robotTime % actualUpdateTime < updateLimit 
           && robotTime % actualUpdateTime > 0) {
@@ -319,13 +320,16 @@ public class GlitchLEDPatterns {
           double flame = ((Math.sin(usefulTime) 
               + Math.sin(usefulTime / randomOffset) 
               + Math.pow(Math.sin(usefulTime), 2) 
-              + 3*(Math.pow(Math.sin(usefulTime / randomOffset), 2))) 
-              * reader.getLength() / 6) + 0.1;
+              + 3*(Math.pow(Math.sin(usefulTime / randomOffset), 2))
+              + (usefulTime / 6)
+              + 1) 
+              * reader.getLength() / 8) + 0.1;
 
           double energy = Math.cos(usefulTime) 
                         + (Math.cos(usefulTime / randomOffset) * 1/randomOffset) 
                         + (2 * Math.sin(usefulTime) * Math.cos(usefulTime))
-                        + (6 * Math.sin(usefulTime / randomOffset) * Math.cos(usefulTime / randomOffset) * 1/randomOffset);
+                        + (6 * Math.sin(usefulTime / randomOffset) * Math.cos(usefulTime / randomOffset) * 1/randomOffset)
+                        + 1/6;
 
           if (r + g + b != 0) {
             isLit = true;
@@ -365,7 +369,7 @@ public class GlitchLEDPatterns {
             writer.setRGB(index, r, g, b);
           } else if (energy > 0) {
             writer.setRGB(index, 0, 0, 0);
-          } else if (energy < 0 && Math.random() * reader.getLength() < flame) {
+          } else if (energy < 0 && Math.random() * reader.getLength() * 2 < flame) {
             writer.setRGB(index, r, g, b);
           } else {
             writer.setRGB(index, 0, 0, 0);
@@ -382,7 +386,7 @@ public class GlitchLEDPatterns {
    * @return The fire pattern.
    */
   public static LEDPattern fire(LEDPattern pattern, double updateTime) {
-    return fire(pattern, updateTime, null);
+    return fire(pattern, updateTime, null, 0.5);
   }
 
   /**
@@ -393,7 +397,7 @@ public class GlitchLEDPatterns {
    * @return The fire pattern.
    */
   public static LEDPattern fire(LEDPattern pattern, Color shiftColor) {
-    return fire(pattern, 0.11, shiftColor);
+    return fire(pattern, 0.11, shiftColor, 0.5);
   }
 
   /**
@@ -402,7 +406,7 @@ public class GlitchLEDPatterns {
    * @return The fire pattern.
    */
   public static LEDPattern fire(LEDPattern pattern) {
-    return fire(pattern, 0.11, null);
+    return fire(pattern, 0.11, null, 0.5);
   }
 
   /** 
@@ -494,7 +498,7 @@ public class GlitchLEDPatterns {
    * @param pattern The pattern the ripples overlay.
    * @param updateTime The time between updates of the overlay in seconds.
    * @param frequency The rate at which the ripples move.
-   * @param wavelength The size of an individual ripple and the distance between them.
+   * @param wavelength The size of an individual ripple and the distance between them. (Larger numbers mean smaller ripples)
    * @return The ripple pattern.
    */
   public static LEDPattern ripple(LEDPattern pattern, double updateTime, double frequency, double wavelength) {
@@ -547,11 +551,9 @@ public class GlitchLEDPatterns {
   /**
    * Creates a overlay pattern that kinda looks like ripples moving through water. (2026)
    * @param pattern The pattern the ripples overlay.
-   * @param frequency The rate at which the ripples move.
-   * @param wavelength The size of an individual ripple and the distance between them.
    * @return The ripple pattern.
    */
   public static LEDPattern ripple(LEDPattern pattern) {
-    return ripple(pattern, 0.11, 3, 4);
+    return ripple(pattern, 0.11, 7, 14);
   }
 }

@@ -31,7 +31,7 @@ public abstract class AbstractLEDS extends SubsystemBase {
     private double durationSeconds = infiniteDurationSeconds;
     private double elapsedSeconds = 0.0;
 
-    public LEDPattern basePattern;
+    public LEDPattern basePattern = LEDPattern.kOff;
 
     private Section(int startIndex, int endIndex) {
       bufferView = stripBuffer.createView(startIndex, endIndex);
