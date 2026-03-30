@@ -62,6 +62,19 @@ public class GlitchLEDPatterns {
             Percent.per(Second).of(15));
 
   /**
+   * The sunset aro-ace flag because it looks lovely (2026)
+   */
+  public static final LEDPattern sunsetAce = 
+    LEDPattern.steps(
+      Map.of(
+        0.0, Color.kOrange,
+        0.2, Color.kYellow,
+        0.4, Color.kWhite,
+        0.6, Color.kSkyBlue,
+        0.8, Color.kDarkBlue
+      ));
+
+  /**
    * Solid green pattern (2025).
    * 
    * This used to be our 2025 default pattern but I (Griffin) changed it to a fiery version of theCoolerGreen because that was WAY cooler.
@@ -113,7 +126,7 @@ public class GlitchLEDPatterns {
     Color.kOrange, 
     Color.kRed);
   /**
-   * Colral pickup pattern (2025)
+   * Coral pickup pattern (2025)
    */
   public static final LEDPattern coralPickup = LEDPattern.gradient(
     GradientType.kDiscontinuous, 
