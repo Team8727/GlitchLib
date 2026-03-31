@@ -163,9 +163,9 @@ public abstract class Pivot extends SubsystemBase {
     lastPosition = rawPos;
     currentAdjustedPosition = rolloverCount + rawPos;
 
-    logger.logDouble("position", currentAdjustedPosition * 360);
-    logger.logDouble("setpoint", setpoint.position);
-    logger.logDouble("goal", goal.position);
+    logger.log("position", currentAdjustedPosition * 360);
+    logger.log("setpoint", setpoint.position);
+    logger.log("goal", goal.position);
 
     setpoint = profile.calculate(0.02, setpoint, goal);
 
