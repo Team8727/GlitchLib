@@ -290,7 +290,8 @@ public class GlitchLEDPatterns {
       AddressableLEDBuffer tempBuffer = new AddressableLEDBuffer(reader.getLength());
       pattern.applyTo(tempBuffer);
 
-      double randomOffset = 0.3 + (Math.random()/(1/0.3));
+      // double randomOffset = 0.3 + (Math.random()/(1/0.3));
+      double randomOffset = 0.45 + (0.005 - Math.random() * 0.01);
       long actualUpdateTime = (long) Seconds.of(updateTime).in(Microseconds);
       long updateLimit = (long) Seconds.of(0.039).in(Microseconds);
       long robotTime = RobotController.getTime();
@@ -301,24 +302,59 @@ public class GlitchLEDPatterns {
 
         reader.forEach( (index, red, green, blue) -> {
 
-          int r = tempBuffer.getRed(index);
-          int g = tempBuffer.getGreen(index);
-          int b = tempBuffer.getBlue(index);
+          int r;
+          int g;
+          int b;
 
+          // int r = tempBuffer.getRed(index);
+          // int g = tempBuffer.getGreen(index);
+          // int b = tempBuffer.getBlue(index);
+
+          int realRed = reader.getRed(index);
+          int realGreen = reader.getGreen(index);
+          int realBlue = reader.getBlue(index);
+
+          if (realRed < 10) {
+            realRed = 0;
+            r = tempBuffer.getRed(index);
+          }
+          if (realGreen < 10) {
+            realGreen = 0;
+            g = tempBuffer.getGreen(index);
+          }
+          if (realBlue < 10) {
+            realBlue = 0;
+            b = tempBuffer.getBlue(index);
+          }
+
+          r = (tempBuffer.getRed(index) + (9*realRed)) /10;
+          g = (tempBuffer.getGreen(index) + (9*realGreen)) / 10;
+          b = (tempBuffer.getBlue(index) + (9*realBlue)) / 10;
+
+          if (r < 10) {
+            r = 0;
+          }
+          if (g < 10) {
+            g = 0;
+          }
+          if (b < 10) {
+            b = 0;
+          }
+          
           if (shiftColor != null) {
             if (shiftColor == Color.kRed) {
-              g = (int) Math.min(g, (0.25 * reader.getLength() * g) / (index + 1));
-              b = (int) Math.min(b, (0.25 * reader.getLength() * b) / (index + 1));
+              g = (int) Math.min(g, (0.5 * reader.getLength() * g) / (index + 1));
+              b = (int) Math.min(b, (0.5 * reader.getLength() * b) / (index + 1));
             } else if (shiftColor == Color.kGreen) {
-              r = (int) Math.min(r, (0.25 * reader.getLength() * r) / (index + 1));
-              b = (int) Math.min(b, (0.25 * reader.getLength() * b) / (index + 1));
+              r = (int) Math.min(r, (0.5 * reader.getLength() * r) / (index + 1));
+              b = (int) Math.min(b, (0.5 * reader.getLength() * b) / (index + 1));
             } else if (shiftColor == Color.kBlue) {
-              r = (int) Math.min(r, (0.25 * reader.getLength() * r) / (index + 1));
-              g = (int) Math.min(g, (0.25 * reader.getLength() * g) / (index + 1));
+              r = (int) Math.min(r, (0.5 * reader.getLength() * r) / (index + 1));
+              g = (int) Math.min(g, (0.5 * reader.getLength() * g) / (index + 1));
             } else {
-              r = (int) Math.min(r, (0.4 * reader.getLength() * r) / (index + 1));
-              g = (int) Math.min(g, (0.4 * reader.getLength() * g) / (index + 1));
-              b = (int) Math.min(b, (0.4 * reader.getLength() * b) / (index + 1));
+              r = (int) Math.min(r, (0.8 * reader.getLength() * r) / (index + 1));
+              g = (int) Math.min(g, (0.8 * reader.getLength() * g) / (index + 1));
+              b = (int) Math.min(b, (0.8 * reader.getLength() * b) / (index + 1));
             }
           }
 
@@ -370,22 +406,26 @@ public class GlitchLEDPatterns {
             if (energy > 0 && Math.random() < 0.8) {
               writer.setRGB(index, r, g, b);
             } else if (energy > 0) {
-              writer.setRGB(index, 0, 0, 0);
+              // writer.setRGB(index, 0, 0, 0);
+              writer.setRGB(index, (int) (r/1.5), (int) (g/1.5), (int) (b/1.5));
             } else if (energy < 0 && Math.random() < 0.9) {
               writer.setRGB(index, r, g, b);
             } else {
-              writer.setRGB(index, 0, 0, 0);
+              // writer.setRGB(index, 0, 0, 0);
+              writer.setRGB(index, (int) (r/1.5), (int) (g/1.5), (int) (b/1.5));
             }
           }/*this is when it is outside the main flame body*/ else if (energy > 0 && Math.random() > 0.5 
               && ((!isLit && (nearHigh || midHigh || farHigh))
               || (isLit && (nearLow && midLow && farLow)))) {
             writer.setRGB(index, r, g, b);
           } else if (energy > 0) {
-            writer.setRGB(index, 0, 0, 0);
+            // writer.setRGB(index, 0, 0, 0);
+            writer.setRGB(index, (int) (r/1.5), (int) (g/1.5), (int) (b/1.5));
           } else if (energy < 0 && Math.random() * reader.getLength() * 2 < flame) {
             writer.setRGB(index, r, g, b);
           } else {
-            writer.setRGB(index, 0, 0, 0);
+            // writer.setRGB(index, 0, 0, 0);
+            writer.setRGB(index, (int) (r/1.5), (int) (g/1.5), (int) (b/1.5));
           }
         });
       }
