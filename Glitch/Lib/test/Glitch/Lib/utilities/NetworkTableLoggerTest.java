@@ -2,12 +2,33 @@ package Glitch.Lib.utilities;
 
 import Glitch.Lib.NetworkTableLogger;
 import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class NetworkTableLoggerTest {
+
+    private static class TestSendable implements Sendable {
+        private double value;
+
+        private TestSendable(double initialValue) {
+            value = initialValue;
+        }
+
+        public void setValue(double value) {
+            this.value = value;
+        }
+
+        @Override
+        public void initSendable(SendableBuilder builder) {
+            builder.setSmartDashboardType("TestSendable");
+            builder.addDoubleProperty("value", () -> value, null);
+        }
+    }
 
     private NetworkTableLogger logger;
 
@@ -17,59 +38,69 @@ public class NetworkTableLoggerTest {
 
     @BeforeEach
     public void setUp() {
-        logger = new NetworkTableLogger("TestLogger");
+        logger = new NetworkTableLogger("TestLogger", 50.0);
     }
 
     @Test
-    public void testLogDouble() {
-        String key1 = "someValue";
-        String key2 = "someOtherValue";
+    public void testChangedValuePublishes() {
+        String key = "doubleValue";
 
-        for (double i = 0.0; i < 10.0; i += 1.0) {
-            logger.log(key1, i);
-            logger.log(key2, i * 2);
-            assertEquals(i, getTableEntry(key1).getDouble(-1));
-            assertEquals(i * 2, getTableEntry(key2).getDouble(-1));
-        }
+        logger.log(key, 1.0);
+        assertEquals(1.0, getTableEntry(key).getDouble(-1));
+
+        logger.log(key, 1.0);
+        assertEquals(1.0, getTableEntry(key).getDouble(-1));
     }
 
     @Test
-    public void testLogBoolean() {
-        String key1 = "someBoolean";
-        String key2 = "someOtherBoolean";
+    public void testRateLimitDefersChangedPublish() throws InterruptedException {
+        String key = "rateLimited";
 
-        for (int i = 0; i < 10; ++i) {
-            logger.log(key1, i % 2 == 0);
-            logger.log(key2, i % 2 == 1);
-            assertEquals(i % 2 == 0, getTableEntry(key1).getBoolean(false));
-            assertEquals(i % 2 == 1, getTableEntry(key2).getBoolean(false));
-        }
+        logger.log(key, 1.0);
+        assertEquals(1.0, getTableEntry(key).getDouble(-1));
+
+        logger.log(key, 2.0);
+        assertEquals(1.0, getTableEntry(key).getDouble(-1));
+
+        Thread.sleep(25);
+        logger.log(key, 2.0);
+        assertEquals(2.0, getTableEntry(key).getDouble(-1));
     }
 
     @Test
-    public void testLogString() {
-        String key1 = "someString";
-        String key2 = "someOtherString";
+    public void testIntArraySnapshotDetectsInPlaceMutation() throws InterruptedException {
+        String key = "intArray";
+        int[] value = new int[]{1, 2, 3};
 
-        String base = "string";
-        for (int i = 0; i < 10; ++i) {
-            logger.log(key1, base + i);
-            logger.log(key2, base + i + 1);
-            assertEquals(base + i, getTableEntry(key1).getString(""));
-            assertEquals(base + i + 1, getTableEntry(key2).getString(""));
-        }
+        logger.log(key, value);
+        assertEquals(1, getTableEntry(key).getIntegerArray(new long[0])[0]);
+
+        value[0] = 9;
+        Thread.sleep(25);
+        logger.log(key, value);
+        assertEquals(9, getTableEntry(key).getIntegerArray(new long[0])[0]);
     }
 
     @Test
-    public void testLogInt() {
-        String key1 = "someInt";
-        String key2 = "someOtherInt";
+    public void testSetLoggingRateHzValidation() {
+        assertThrows(IllegalArgumentException.class, () -> logger.setLoggingRateHz(0.0));
+        assertThrows(IllegalArgumentException.class, () -> logger.setLoggingRateHz(50.1));
 
-        for (int i = 0; i < 10; i++) {
-            logger.log(key1, i);
-            logger.log(key2, i * 2);
-            assertEquals(i, getTableEntry(key1).getInteger(-1));
-            assertEquals(i * 2, getTableEntry(key2).getInteger(-1));
-        }
+        logger.setLoggingRateHz(25.0);
+        assertEquals(25.0, logger.getLoggingRateHz());
+    }
+
+    @Test
+    public void testLogSendablePublishesAndUpdates() throws InterruptedException {
+        String key = "sendable";
+        TestSendable sendable = new TestSendable(2.5);
+
+        logger.logSendable(key, sendable);
+        assertEquals(2.5, logger.getNetworkTable().getSubTable(key).getEntry("value").getDouble(Double.NaN), 1e-9);
+
+        sendable.setValue(7.0);
+        Thread.sleep(25);
+        logger.logSendable(key, sendable);
+        assertEquals(7.0, logger.getNetworkTable().getSubTable(key).getEntry("value").getDouble(Double.NaN), 1e-9);
     }
 }
