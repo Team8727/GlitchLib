@@ -69,7 +69,7 @@ public class GlitchLEDPatterns {
       Map.of(
         0.0, Color.kOrange,
         0.2, Color.kYellow,
-        0.4, Color.kWhite,
+        0.4, Color.kWhiteSmoke,
         0.6, Color.kSkyBlue,
         0.8, Color.kDarkBlue
       ));

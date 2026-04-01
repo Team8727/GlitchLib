@@ -85,6 +85,10 @@ public abstract class AbstractLEDS extends SubsystemBase {
         }
       }
 
+      if (pattern == null) {
+        pattern = basePattern;
+      }
+
       pattern.applyTo(this.bufferView);
     }
 
