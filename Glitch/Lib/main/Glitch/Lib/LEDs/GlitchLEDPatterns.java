@@ -23,7 +23,7 @@ public class GlitchLEDPatterns {
   /**
    * Solid purple pattern (2025)
    */
-  public static final LEDPattern purple = LEDPattern.solid(Color.kPurple);
+  public static final LEDPattern purple = LEDPattern.solid(GlitchColors.purple);
   
   /**
    * Rainbow pattern with a scrolling mask (2025) 
@@ -57,7 +57,7 @@ public class GlitchLEDPatterns {
    * PRIDE MONTH WOOOOOOOOOOOOOOO
    */
   public static final LEDPattern ace =
-      LEDPattern.gradient(GradientType.kContinuous, Color.kPurple, Color.kGreen)
+      LEDPattern.gradient(GradientType.kContinuous, GlitchColors.purple, Color.kGreen)
           .scrollAtRelativeSpeed(
             Percent.per(Second).of(15));
 
@@ -67,11 +67,11 @@ public class GlitchLEDPatterns {
   public static final LEDPattern sunsetAce = 
     LEDPattern.steps(
       Map.of(
-        0.0, Color.kOrange,
-        0.2, Color.kYellow,
-        0.4, Color.kWhiteSmoke,
+        0.0, Color.kOrangeRed,
+        0.2, Color.kOrange,
+        0.4, Color.kWhiteSmoke, //Note: The strip hates the color green. Maybe try a weird purple instead.
         0.6, Color.kSkyBlue,
-        0.8, Color.kDarkBlue
+        0.8, GlitchColors.darkBlue
       ));
 
   /**
@@ -144,7 +144,7 @@ public class GlitchLEDPatterns {
   public static final LEDPattern algaePickup = LEDPattern.gradient(
     GradientType.kDiscontinuous,
     Color.kGreen,
-    Color.kPurple,
+    GlitchColors.purple,
     Color.kOrange,
     Color.kRed)
       .blink(Second.of(0.5));
@@ -171,7 +171,7 @@ public class GlitchLEDPatterns {
     Color.kYellow, 
     Color.kGreen, 
     Color.kBlue, 
-    Color.kPurple)
+    GlitchColors.purple)
       .scrollAtRelativeSpeed(Percent.per(Second).of(10));
 
   /*
@@ -314,22 +314,26 @@ public class GlitchLEDPatterns {
           int realGreen = reader.getGreen(index);
           int realBlue = reader.getBlue(index);
 
-          if (realRed < 10) {
+          double fadeConstant = 10;
+
+          if (realRed < tempBuffer.getRed(index) / Math.pow(fadeConstant, 2)) {
             realRed = 0;
             r = tempBuffer.getRed(index);
+          } else {
+            r = (tempBuffer.getRed(index) + (9*realRed)) /10;
           }
-          if (realGreen < 10) {
+          if (realGreen < tempBuffer.getGreen(index) / Math.pow(fadeConstant, 2)) {
             realGreen = 0;
             g = tempBuffer.getGreen(index);
+          } else {
+            g = (tempBuffer.getGreen(index) + (9*realGreen)) / 10;
           }
-          if (realBlue < 10) {
+          if (realBlue < tempBuffer.getBlue(index) / Math.pow(fadeConstant, 2)) {
             realBlue = 0;
             b = tempBuffer.getBlue(index);
+          } else {
+            b = (tempBuffer.getBlue(index) + (9*realBlue)) / 10;
           }
-
-          r = (tempBuffer.getRed(index) + (9*realRed)) /10;
-          g = (tempBuffer.getGreen(index) + (9*realGreen)) / 10;
-          b = (tempBuffer.getBlue(index) + (9*realBlue)) / 10;
 
           if (r < 10) {
             r = 0;
@@ -407,12 +411,12 @@ public class GlitchLEDPatterns {
               writer.setRGB(index, r, g, b);
             } else if (energy > 0) {
               // writer.setRGB(index, 0, 0, 0);
-              writer.setRGB(index, (int) (r/1.5), (int) (g/1.5), (int) (b/1.5));
+              writer.setRGB(index, (int) (r/fadeConstant), (int) (g/fadeConstant), (int) (b/fadeConstant));
             } else if (energy < 0 && Math.random() < 0.9) {
               writer.setRGB(index, r, g, b);
             } else {
               // writer.setRGB(index, 0, 0, 0);
-              writer.setRGB(index, (int) (r/1.5), (int) (g/1.5), (int) (b/1.5));
+              writer.setRGB(index, (int) (r/fadeConstant), (int) (g/fadeConstant), (int) (b/fadeConstant));
             }
           }/*this is when it is outside the main flame body*/ else if (energy > 0 && Math.random() > 0.5 
               && ((!isLit && (nearHigh || midHigh || farHigh))
@@ -420,12 +424,12 @@ public class GlitchLEDPatterns {
             writer.setRGB(index, r, g, b);
           } else if (energy > 0) {
             // writer.setRGB(index, 0, 0, 0);
-            writer.setRGB(index, (int) (r/1.5), (int) (g/1.5), (int) (b/1.5));
+            writer.setRGB(index, (int) (r/fadeConstant), (int) (g/fadeConstant), (int) (b/fadeConstant));
           } else if (energy < 0 && Math.random() * reader.getLength() * 2 < flame) {
             writer.setRGB(index, r, g, b);
           } else {
             // writer.setRGB(index, 0, 0, 0);
-            writer.setRGB(index, (int) (r/1.5), (int) (g/1.5), (int) (b/1.5));
+            writer.setRGB(index, (int) (r/fadeConstant), (int) (g/fadeConstant), (int) (b/fadeConstant));
           }
         });
       }
