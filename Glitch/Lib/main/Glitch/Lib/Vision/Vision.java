@@ -197,50 +197,57 @@ public class Vision {
 
     @Override
     public List<Measurement> drainMeasurements(Pose2d referencePose) {
-      List<Measurement> out = new ArrayList<>();
-      for (CamBundle cb : cameras) {
+      List<Measurement> outputs = new ArrayList<>();
+      for (CamBundle camBundle : cameras) {
         try {
-          List<PhotonPipelineResult> res = cb.camera.getAllUnreadResults();
-          if (res == null || res.isEmpty()) continue;
-          PhotonPipelineResult latest = res.get(res.size() - 1);
-          if (!latest.hasTargets()) continue;
-          for (PhotonTrackedTarget target : latest.getTargets()) {
+          List<PhotonPipelineResult> results = camBundle.camera.getAllUnreadResults();
+          if (results == null || results.isEmpty()) continue;
+          PhotonPipelineResult latestPipelineResult = results.get(results.size() - 1);
+          if (!latestPipelineResult.hasTargets()) continue;
+          for (PhotonTrackedTarget target : latestPipelineResult.getTargets()) {
             double ambiguity = target.getPoseAmbiguity();
             double dx = target.getBestCameraToTarget().getX();
             double dy = target.getBestCameraToTarget().getY();
             double dz = target.getBestCameraToTarget().getZ();
             double dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
             if ((ambiguity <= cfg.maxAmbiguity && ambiguity != -1) && dist < cfg.maxDistanceMeters) {
-              cb.poseEstimator.addHeadingData(latest.getTimestampSeconds(), referencePose.getRotation());
-              Optional<EstimatedRobotPose> est = cb.poseEstimator.estimateLowestAmbiguityPose(latest);
-              if (est.isPresent()) {
-                out.add(new Measurement(est.get().estimatedPose.toPose2d(), latest.getTimestampSeconds()));
+              camBundle.poseEstimator.addHeadingData(latestPipelineResult.getTimestampSeconds(), referencePose.getRotation());
+              Optional<EstimatedRobotPose> estimatedRobotPose = camBundle.poseEstimator.estimateLowestAmbiguityPose(latestPipelineResult);
+
+//              May not be the best way, but we should try it (by the way this isEmpty check is recommended by PV)
+//              Optional<EstimatedRobotPose> estimatedRobotPose = camBundle.poseEstimator.estimateCoprocMultiTagPose(latestPipelineResult);
+//              if (estimatedRobotPose.isEmpty()) {
+//                estimatedRobotPose = camBundle.poseEstimator.estimateLowestAmbiguityPose(latestPipelineResult);
+//              }
+
+              if (estimatedRobotPose.isPresent()) {
+                outputs.add(new Measurement(estimatedRobotPose.get().estimatedPose.toPose2d(), latestPipelineResult.getTimestampSeconds()));
               }
             }
           }
         } catch (Exception ignored) {
         }
       }
-      return out;
+      return outputs;
     }
 
     @Override
     public Optional<Pose2d> bestStartPose() {
-      for (CamBundle cb : cameras) {
+      for (CamBundle camBundle : cameras) {
         try {
-          List<PhotonPipelineResult> res = cb.camera.getAllUnreadResults();
-          if (res == null || res.isEmpty()) continue;
-          PhotonPipelineResult latest = res.get(res.size() - 1);
-          if (!latest.hasTargets()) continue;
-          PhotonTrackedTarget target = latest.getBestTarget();
+          List<PhotonPipelineResult> results = camBundle.camera.getAllUnreadResults();
+          if (results == null || results.isEmpty()) continue;
+          PhotonPipelineResult latestResult = results.get(results.size() - 1);
+          if (!latestResult.hasTargets()) continue;
+          PhotonTrackedTarget target = latestResult.getBestTarget();
           if (target == null) continue;
           Optional<Pose3d> tagPose = layout.getTagPose(target.getFiducialId());
           if (tagPose.isPresent()) {
-            Pose3d est = PhotonUtils.estimateFieldToRobotAprilTag(
+            Pose3d robotPoseEstimate = PhotonUtils.estimateFieldToRobotAprilTag(
                 target.getBestCameraToTarget(),
                 tagPose.get(),
-                cb.config.robotToCamera);
-            return Optional.of(est.toPose2d());
+                camBundle.config.robotToCamera);
+            return Optional.of(robotPoseEstimate.toPose2d());
           }
         } catch (Exception ignored) {
         }
@@ -311,51 +318,51 @@ public class Vision {
     public List<Measurement> drainMeasurements(Pose2d referencePose) {
       // Update the sim world to current pose to generate frames
       visionSim.update(new Pose3d(referencePose));
-      List<Measurement> out = new ArrayList<>();
-      for (SimCamBundle cb : cameras) {
+      List<Measurement> outputEstimates = new ArrayList<>();
+      for (SimCamBundle simCamBundle : cameras) {
         try {
-          List<PhotonPipelineResult> res = cb.camera.getAllUnreadResults();
-          if (res == null || res.isEmpty()) continue;
-          PhotonPipelineResult latest = res.get(res.size() - 1);
-          if (!latest.hasTargets()) continue;
-          for (PhotonTrackedTarget target : latest.getTargets()) {
+          List<PhotonPipelineResult> results = simCamBundle.camera.getAllUnreadResults();
+          if (results == null || results.isEmpty()) continue;
+          PhotonPipelineResult latestResult = results.get(results.size() - 1); // Get the element at the last index of the list
+          if (!latestResult.hasTargets()) continue;
+          for (PhotonTrackedTarget target : latestResult.getTargets()) {
             double ambiguity = target.getPoseAmbiguity();
             double dx = target.getBestCameraToTarget().getX();
             double dy = target.getBestCameraToTarget().getY();
             double dz = target.getBestCameraToTarget().getZ();
             double dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
             if ((ambiguity <= cfg.maxAmbiguity && ambiguity != -1) && dist < cfg.maxDistanceMeters) {
-              cb.poseEstimator.addHeadingData(latest.getTimestampSeconds(), referencePose.getRotation());
-              Optional<EstimatedRobotPose> est = cb.poseEstimator.update(latest);
-              if (est.isPresent()) {
+              simCamBundle.poseEstimator.addHeadingData(latestResult.getTimestampSeconds(), referencePose.getRotation());
+              Optional<EstimatedRobotPose> estimatedRobotPose = simCamBundle.poseEstimator.update(latestResult);
+              if (estimatedRobotPose.isPresent()) {
                 // Use current FPGA timestamp to mirror real path
-                out.add(new Measurement(est.get().estimatedPose.toPose2d(), Timer.getFPGATimestamp()));
+                outputEstimates.add(new Measurement(estimatedRobotPose.get().estimatedPose.toPose2d(), Timer.getFPGATimestamp()));
               }
             }
           }
         } catch (Exception ignored) {
         }
       }
-      return out;
+      return outputEstimates;
     }
 
     @Override
     public Optional<Pose2d> bestStartPose() {
-      for (SimCamBundle cb : cameras) {
+      for (SimCamBundle simCamBundle : cameras) {
         try {
-          List<PhotonPipelineResult> res = cb.camera.getAllUnreadResults();
-          if (res == null || res.isEmpty()) continue;
-          PhotonPipelineResult latest = res.get(res.size() - 1);
-          if (!latest.hasTargets()) continue;
-          PhotonTrackedTarget target = latest.getBestTarget();
+          List<PhotonPipelineResult> results = simCamBundle.camera.getAllUnreadResults();
+          if (results == null || results.isEmpty()) continue;
+          PhotonPipelineResult latestResult = results.get(results.size() - 1);
+          if (!latestResult.hasTargets()) continue;
+          PhotonTrackedTarget target = latestResult.getBestTarget();
           if (target == null) continue;
           Optional<Pose3d> tagPose = layout.getTagPose(target.getFiducialId());
           if (tagPose.isPresent()) {
-            Pose3d est = PhotonUtils.estimateFieldToRobotAprilTag(
+            Pose3d estimatedRobotPose = PhotonUtils.estimateFieldToRobotAprilTag(
                 target.getBestCameraToTarget(),
                 tagPose.get(),
-                cb.config.robotToCamera);
-            return Optional.of(est.toPose2d());
+                simCamBundle.config.robotToCamera);
+            return Optional.of(estimatedRobotPose.toPose2d());
           }
         } catch (Exception ignored) {
         }
