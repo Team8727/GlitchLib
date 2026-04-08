@@ -9,7 +9,11 @@ import edu.wpi.first.wpilibj.AddressableLED.ColorOrder;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.AddressableLEDBufferView;
 import edu.wpi.first.wpilibj.LEDPattern;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
+import static edu.wpi.first.units.Units.Microseconds;
+import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.List;
 
@@ -174,16 +178,42 @@ public abstract class AbstractLEDS extends SubsystemBase {
   /**
    * Updates all LED sections and applies the data buffer to the LED strip.
    */
+  private static List<Long> timeStamps = new java.util.ArrayList<Long>();
+  private double lastUpdateTime;
+  private double deltaTimeSeconds;
+
+  public static Long getTime() {
+    if (timeStamps.size() > 0) {
+      return timeStamps.get(timeStamps.size() - 1);
+    } else {
+      timeStamps.add(RobotController.getTime());
+      return RobotController.getTime();
+    }
+  }
+
   @Override
   public void periodic() {
-    final double deltaTimeSeconds = 0.02; // TODO: Is there a way to ensure this is accurate even with overruns?
+    if (timeStamps.size() == 0) {
+      timeStamps.add(RobotController.getTime());
+      deltaTimeSeconds = Microseconds.of(timeStamps.get(0)).in(Seconds);
+    } else {
+      timeStamps.add(RobotController.getTime());
+      deltaTimeSeconds = Microseconds.of(timeStamps.get(timeStamps.size() - 1) - timeStamps.get(timeStamps.size() - 2)).in(Seconds);
+    }
+
+    if (timeStamps.size() > 5) {
+      timeStamps.remove(0);
+    }
+    
+    // final double deltaTimeSeconds = 0.02; // TODO: Is there a way to ensure this is accurate even with overruns?
 
     for (Section section : sectionList) {
       section.update(deltaTimeSeconds);
     }
 
-    if (lightStrip != null) {
+    if ((timeStamps.get(timeStamps.size() - 1) - lastUpdateTime >= Seconds.of(0.2).in(Microseconds)) && lightStrip != null) {
       lightStrip.setData(stripBuffer);
+      lastUpdateTime = RobotController.getTime();
     }
   }
 }
