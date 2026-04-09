@@ -63,6 +63,7 @@ public abstract class Roller extends SubsystemBase {
 
   public void setVelocity(double speed) {
     this.setVelocity(speed, ControlMode.PID);
+    logger.logDouble("set velocity", speed);
   }
 
   /**
