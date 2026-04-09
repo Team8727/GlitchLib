@@ -41,6 +41,10 @@ public class SparkMaxMotor implements Motor{
     motorController.setSetpoint(velocity, SparkBase.ControlType.kVelocity);
   }
 
+  public void setVelocity(double velocity, double arbFFVoltage) {
+    motorController.setSetpoint(velocity, SparkBase.ControlType.kVelocity, ClosedLoopSlot.kSlot0, arbFFVoltage, SparkClosedLoopController.ArbFFUnits.kVoltage);
+  }
+
   @Override
   public void setDutyCycle(double dutyCycle) {
     motorController.setSetpoint(dutyCycle, SparkBase.ControlType.kDutyCycle);
@@ -105,5 +109,10 @@ public class SparkMaxMotor implements Motor{
   @Override
   public boolean getReverseLimitSwitch() {
     return motor.getReverseLimitSwitch().isPressed();
+  }
+
+  /** Gets the motor **/
+  public SparkMax getMotor() {
+    return motor;
   }
 }

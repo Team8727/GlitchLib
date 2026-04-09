@@ -7,8 +7,13 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 public abstract class Roller extends SubsystemBase {
 
   private final Motor motor;
-
   public final NetworkTableLogger logger;
+
+  public enum ControlMode {
+    FEEDFORWARD,
+    PID,
+    FF_AND_PID
+  }
 
   /**
    * Creates a new Roller.
@@ -26,7 +31,7 @@ public abstract class Roller extends SubsystemBase {
    *
    * @param speed The speed to set the motor to, as a percentage (0.0 to 1.0)
    */
-  public void setSpeedDutyCycle(double speed) {
+  public void setDutyCycle(double speed) {
     motor.setDutyCycle(speed);
     logger.logDouble("set cycle", speed);
   }
@@ -36,18 +41,28 @@ public abstract class Roller extends SubsystemBase {
    *
    * @param volts The voltage to set the motor to
    */
-  public void setSpeedVoltage(double volts) {
+  public void setVoltage(double volts) {
     motor.setVoltage(volts);
   }
 
   /**
-   * Sets the speed of the roller motor in velocity mode.
+   * Sets the speed of the roller motor in velocity mode, using one of the three control modes (PID, FF, FF_AND_PID).
    *
-   * @param speed The speed to set the motor to, in RPM
+   * @param speed The speed to set the motor to, in RPS
+   * @param mode The control mode to use when setting the velocity
+   * @implNote The control modes are as follows:
+   * <p> - PID: Uses the motor's built-in PID controller to achieve the target velocity </p>
+   * <p> - FEEDFORWARD: Uses feedforward control to achieve the target velocity, without relying on the motor's built-in PID controller </p>
+   * <p> - FF_AND_PID: Uses feedforward control to get close to the target velocity, and then uses the motor's built-in PID controller to fine-tune and maintain the target velocity </p>
+   * <p> - Note: The feedforward constants used in the FEEDFORWARD and FF_AND_PID modes are determined by the motor's configuration. They are found using WPILib SimpleMotorFeedforward </p>
    */
-  public void setSpeedVelocity(double speed) {
+  public void setVelocity(double speed, ControlMode mode) {
     motor.setVelocity(speed);
     logger.logDouble("set velocity", speed);
+  }
+
+  public void setVelocity(double speed) {
+    this.setVelocity(speed, ControlMode.PID);
   }
 
   /**
@@ -91,15 +106,23 @@ public abstract class Roller extends SubsystemBase {
    *
    * @return The limit switch state of the motor
    */
-  public boolean getForwardLimitSwitch() {return motor.getForwardLimitSwitch();}
+  public boolean getForwardLimitSwitch() {
+    return motor.getForwardLimitSwitch();
+  }
 
   /**
    * gets the reverse limit switch state of the roller motor.
    *
    * @return The limit switch state of the motor
    */
-  public boolean getReverseLimitSwitch() {return motor.getReverseLimitSwitch();}
+  public boolean getReverseLimitSwitch() {
+    return motor.getReverseLimitSwitch();
+  }
 
+  /** Gets the motor **/
+  public Motor getMotor() {
+    return motor;
+  }
 
   // This method will be called once per scheduler run
   @Override

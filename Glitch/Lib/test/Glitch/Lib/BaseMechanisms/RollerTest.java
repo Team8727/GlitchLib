@@ -27,13 +27,13 @@ public class RollerTest {
 
   @Test
   void setSpeedDutyCycleDelegatesToMotor() {
-    roller.setSpeedDutyCycle(0.75);
+    roller.setDutyCycle(0.75);
     assertEquals(0.75, motor.duty, 1e-9);
   }
 
   @Test
   void setSpeedVelocityDelegatesToMotor() {
-    roller.setSpeedVelocity(123.0);
+    roller.setVelocity(123.0);
     assertEquals(123.0, motor.velocity, 1e-9);
   }
 
