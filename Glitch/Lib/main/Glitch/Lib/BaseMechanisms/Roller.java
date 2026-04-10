@@ -8,6 +8,7 @@ public abstract class Roller extends SubsystemBase {
 
   private final Motor motor;
   public final NetworkTableLogger logger;
+  public boolean isRunning = false;
 
   public enum ControlMode {
     FEEDFORWARD,
@@ -125,6 +126,14 @@ public abstract class Roller extends SubsystemBase {
     return motor;
   }
 
+  /** Gets whether the roller is currently running (i.e. current is above 1 Amp)
+   *
+   * @return true if the roller is running, false otherwise
+   */
+  public boolean getIsRunning() {
+    return isRunning;
+  }
+
   // This method will be called once per scheduler run
   @Override
   public void periodic() {
@@ -133,6 +142,7 @@ public abstract class Roller extends SubsystemBase {
     logger.logDouble("current", motor.getCurrent());
     logger.logBoolean("forward limit switch", motor.getForwardLimitSwitch());
     logger.logBoolean("reverse limit switch", motor.getReverseLimitSwitch());
-    logger.logBoolean("is running", motor.getCurrent() > 2);
+    isRunning = motor.getCurrent() > 1;
+    logger.logBoolean("is running", isRunning);
   }
 }
