@@ -10,7 +10,10 @@ import edu.wpi.first.wpilibj.LEDPattern.GradientType;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.util.Color;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.function.DoubleUnaryOperator;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -69,7 +72,8 @@ public class GlitchLEDPatterns {
       Map.of(
         0.0, Color.kOrangeRed,
         0.2, Color.kOrange,
-        0.4, Color.kWhiteSmoke, //Note: The strip hates the color green. Maybe try a weird purple instead.
+        // 0.4, Color.kWhiteSmoke, //Note: The strip hates the color green. Maybe try a weird purple instead.
+        0.4, new Color(0.75, 6, 4),
         0.6, Color.kSkyBlue,
         0.8, GlitchColors.darkBlue
       ));
@@ -612,5 +616,108 @@ public class GlitchLEDPatterns {
    */
   public static LEDPattern ripple(LEDPattern pattern) {
     return ripple(pattern, 0.11, 7, 14);
+  }
+
+  /**
+   * Creates a pattern that should look like raindrops. (2026) DO NOT USE YET IT ISN'T READY
+   * @param pattern The pattern the ripples overlay.
+   * @param intensity The speed at which new ripples form (cannot be negative or zero).
+   * @param impact The maximum size of each ripple before it disappears.
+   * @return The pattern of raindrop ripples.
+   */
+  public static LEDPattern rainDrops(LEDPattern pattern, int intensity, int impact) {
+
+    long actualUpdateTime = (long) Seconds.of(0.21).in(Microseconds);
+    long updateLimit = (long) Seconds.of(0.039).in(Microseconds);
+
+    List<Integer> dropIndices = new ArrayList<>(0);
+    List<Long> dropDurations = new ArrayList<>(0);
+    List<Double> dropLuminosities = new ArrayList<>(0);
+
+    DoubleUnaryOperator abstractedMathFunction = (x) -> 
+      Math.cos((x/impact)/2*Math.PI) 
+      - Math.cos(0.5);
+
+    DoubleUnaryOperator overallBehaviorFunction = (x) ->
+      (abstractedMathFunction.applyAsDouble(Math.PI * x) / abstractedMathFunction.applyAsDouble(0.0));
+
+    return (reader, writer) -> {
+      AddressableLEDBuffer tempBuffer = new AddressableLEDBuffer(reader.getLength());
+      pattern.applyTo(tempBuffer);
+
+      if (dropDurations.size() != reader.getLength()) {
+        reader.forEach((i, r, g, b) -> {
+          dropDurations.add(AbstractLEDS.getTime());
+        });
+      }
+      if (dropLuminosities.size() != reader.getLength()) {
+        reader.forEach((i, r, g, b) -> {
+          dropLuminosities.add(0.0);
+        });
+      } else {
+        reader.forEach((i, r, g, b) -> {
+          dropLuminosities.set(i, 0.0);
+        });
+      }
+
+      if (RobotController.getTime() % actualUpdateTime < updateLimit 
+          && RobotController.getTime() % actualUpdateTime > 0) {
+
+        for (int indexIterator = 0; indexIterator < dropIndices.size(); indexIterator++) {
+          for (int i = (impact * -1); i < impact + 1; i++) {
+            int dropIndex = dropIndices.get(indexIterator);
+            int ledIndex;
+
+            if (dropIndex + i < 0) {
+              ledIndex = dropIndex + i + reader.getLength();
+            } else if (dropIndex + i >= reader.getLength()) {
+              ledIndex = (dropIndex + i) - reader.getLength();
+            } else {
+              ledIndex = dropIndex + i;
+            }
+
+            double durationTime = (2 * impact) - Microseconds.of(AbstractLEDS.getTime() - dropDurations.get(ledIndex)).in(Seconds);
+
+            double calcLuminosity;
+
+            if (dropDurations.get(ledIndex) + Seconds.of(Math.abs(i)).in(Microseconds) <= AbstractLEDS.getTime() || i == 0) {
+              calcLuminosity = overallBehaviorFunction.applyAsDouble((durationTime * (Math.abs(i) + 1)) - impact) * overallBehaviorFunction.applyAsDouble(i) / 1 + Math.abs(i);
+            } else {
+              calcLuminosity = 0.0;
+            }
+
+            dropLuminosities.set(ledIndex, Math.min(1.0, dropLuminosities.get(ledIndex) + calcLuminosity));
+
+            if (dropLuminosities.get(ledIndex) == 1.0 && !dropIndices.contains(ledIndex)) {
+              dropIndices.add(ledIndex);
+              dropDurations.set(ledIndex, (long) (AbstractLEDS.getTime() - Seconds.of(3 * intensity).in(Microseconds)));
+            }
+          }
+
+          if (AbstractLEDS.getTime() - dropDurations.get(dropIndices.get(indexIterator)) >= Seconds.of(2.0 * impact).in(Microseconds)) {
+            dropIndices.remove(indexIterator);
+          }
+        }
+
+        reader.forEach((i, red, green, blue) -> {
+          if ((int) (Math.random() * reader.getLength()) == i && Math.random() * 10 < intensity) {
+            writer.setRGB(i, tempBuffer.getRed(i), tempBuffer.getGreen(i), tempBuffer.getBlue(i));
+                if (!dropIndices.contains(i)) {
+                  dropIndices.add(i);
+                }
+                dropDurations.set(i, AbstractLEDS.getTime());
+          }
+
+          writer.setRGB(i, 
+            (int) (tempBuffer.getRed(i) * dropLuminosities.get(i)), 
+            (int) (tempBuffer.getGreen(i) * dropLuminosities.get(i)), 
+            (int) (tempBuffer.getBlue(i) * dropLuminosities.get(i)));
+        });
+
+        // for (int i = 0; i < dropIndices.size(); i++) {
+        //   writer.setRGB(dropIndices.get(i), 255, 255, 255);
+        // }
+      }
+    };
   }
 }

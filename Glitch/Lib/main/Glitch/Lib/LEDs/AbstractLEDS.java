@@ -35,7 +35,7 @@ public abstract class AbstractLEDS extends SubsystemBase {
     private double durationSeconds = infiniteDurationSeconds;
     private double elapsedSeconds = 0.0;
 
-    public LEDPattern basePattern = LEDPattern.kOff;
+    private LEDPattern basePattern = LEDPattern.kOff;
 
     private Section(int startIndex, int endIndex) {
       bufferView = stripBuffer.createView(startIndex, endIndex);
@@ -98,7 +98,7 @@ public abstract class AbstractLEDS extends SubsystemBase {
 
     /**
      * Returns the buffer view for this section.
-     * @return
+     * @return The AddressableLEDBufferView
      */
     public AddressableLEDBufferView getBufferView() {
       return this.bufferView;
@@ -106,10 +106,26 @@ public abstract class AbstractLEDS extends SubsystemBase {
 
     /**
      * Returns the length of this section.
-     * @return
+     * @return The number of LEDs in the section
      */
     public int getLength() {
       return this.bufferView.getLength();
+    }
+
+    /**
+     * Returns the current pattern on the section.
+     * @return The current LED pattern
+     */
+    public LEDPattern getCurrentPattern() {
+      return this.pattern;
+    }
+
+    /**
+     * Returns the base pattern of this section.
+     * @return The pattern this section will return to once others have concluded
+     */
+    public LEDPattern getBasePattern() {
+      return this.basePattern;
     }
   }
   
