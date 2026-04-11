@@ -133,6 +133,6 @@ public abstract class Roller extends SubsystemBase {
     logger.logDouble("current", motor.getCurrent());
     logger.logBoolean("forward limit switch", motor.getForwardLimitSwitch());
     logger.logBoolean("reverse limit switch", motor.getReverseLimitSwitch());
-    logger.logBoolean("is running", motor.getCurrent() > 2);
+    logger.logBoolean("is running", motor.getCurrent() > 1);
   }
 }
