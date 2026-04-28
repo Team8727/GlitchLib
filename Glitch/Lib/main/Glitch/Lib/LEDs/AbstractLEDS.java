@@ -196,7 +196,7 @@ public abstract class AbstractLEDS extends SubsystemBase {
    */
   private static List<Long> timeStamps = new java.util.ArrayList<Long>();
   private double lastUpdateTime;
-  private double deltaTimeSeconds;
+  public static double deltaTimeSeconds;
 
   public static Long getTime() {
     if (timeStamps.size() > 0) {
@@ -227,6 +227,7 @@ public abstract class AbstractLEDS extends SubsystemBase {
       section.update(deltaTimeSeconds);
     }
 
+    // This is here to suppress the update time of the LEDs so that we don't violate the epilepsy risk rules.
     if ((timeStamps.get(timeStamps.size() - 1) - lastUpdateTime >= Seconds.of(0.2).in(Microseconds)) && lightStrip != null) {
       lightStrip.setData(stripBuffer);
       lastUpdateTime = RobotController.getTime();
