@@ -287,6 +287,7 @@ public class GlitchLEDPatterns {
    * @param shiftColor The color the fire shifts towards (putting in a color other than red, green, or blue shifts it to gray).
    * @param speed How fast the wave function of the flame moves (higher is faster, lower is slower, 1 is normal).
    * @return The fire pattern.
+   * Graph of the wave logic: https://www.desmos.com/calculator/r0vs8ddrmf
    */
   public static LEDPattern fire(LEDPattern pattern, double updateTime, Color shiftColor, double speed) {
     return (reader, writer) -> {
@@ -624,6 +625,7 @@ public class GlitchLEDPatterns {
    * @param intensity The speed at which new ripples form (cannot be negative or zero).
    * @param impact The maximum size of each ripple before it disappears.
    * @return The pattern of raindrop ripples.
+   * Graph of the wave logic: https://www.desmos.com/calculator/cmfir0yqqo
    */
   public static LEDPattern rainDrops(LEDPattern pattern, int intensity, int impact) {
 
