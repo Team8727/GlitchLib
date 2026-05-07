@@ -131,7 +131,6 @@ public abstract class AbstractLEDS extends SubsystemBase {
   
   /** Creates a new LEDSubsystem.
    * 
-   * @param port The PWM port the LED strip is connected to.
    * @param length The total number of LEDs in the strip.
    * @param sectionLengths The lengths of each section in the strip. Positive values indicate normal order, negative values indicate reversed order.
    * The sections will be created in the order they are provided.
