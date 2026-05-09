@@ -1,4 +1,4 @@
-package Glitch.Lib.LEDs;
+package Glitch.Lib.LEDs.Interfaces;
 
 import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.LEDReader;
