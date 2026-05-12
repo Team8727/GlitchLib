@@ -120,7 +120,11 @@ public class LEDPatterns {
     // But how do you use this, exactly?
     // Great question!
 
-    LEDPattern examplePattern = (reader, writer) -> {reader.forEach((i, r, g, b) -> {writer.setRGB(i, i, 255 - i, (b + 1) % 255);});};
+    LEDPattern examplePattern = (reader, writer) -> {
+        reader.forEach((i, r, g, b) -> {
+            writer.setRGB(i, i, 255 - i, (b + 1) % 255);
+        });
+    };
 
     // This is a recreation of what the interface pattern I showed you earlier would look like in the (reader, writer) format.
     // Let's walk through the steps, shall we?
@@ -134,7 +138,11 @@ public class LEDPatterns {
     // You can even do this in method form!
 
     LEDPattern methodPattern(int blue) {
-        return (reader, writer) -> {reader.forEach((i, r, g, b) -> {writer.setRGB(i, i, 255 - i, (b + blue) % 255);});};
+        return (reader, writer) -> {
+            reader.forEach((i, r, g, b) -> {
+                writer.setRGB(i, i, 255 - i, (b + blue) % 255);
+            });
+        };
     }
 
     // The best part is that you can actually make these patterns static, so you don't have to create new instances just to run them and they can be used everywhere!
