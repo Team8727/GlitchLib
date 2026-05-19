@@ -93,6 +93,8 @@ public class LEDPatterns {
         }
     }
 
+    LEDPattern myPattern = new MyPattern();
+
     // So. What does any of that actually mean?
     // Since LEDArrayPattern is an interface, it has a method called colorList that basically just has a return type and a parameter.
     // It is your job to figure out what to do with that parameter inside of the method.
